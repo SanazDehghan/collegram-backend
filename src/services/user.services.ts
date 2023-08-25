@@ -1,11 +1,18 @@
 import { Password, generatePasswordHash } from "~/models/password.models";
 import { Email, Username, BaseUser } from "~/models/user.models";
 import { IUserRepo } from "~/repository/user.repo";
-import { DuplicateEmailError, UsernameTakenError } from "./errors/service.errors";
+import { DuplicateEmailError, InvalidUsernameOrPasswordError, UsernameTakenError } from "./errors/service.errors";
 import { TokenServices } from "./token.services";
+import { compare } from "bcrypt";
+import { LoginDTO } from "~/controllers/dtos/user.dtos";
+import { IPasswordRepo } from "~/repository/password.repo";
 
 export class UserServices {
-  constructor(private repository: IUserRepo, private tokenServices: TokenServices) {}
+  constructor(
+    private userRepo: IUserRepo,
+    private passwordRepo: IPasswordRepo,
+    private tokenServices: TokenServices,
+  ) {}
 
   private createUser(email: Email, username: Username): BaseUser {
     return {
@@ -16,13 +23,13 @@ export class UserServices {
   }
 
   public async signup(email: Email, username: Username, password: Password) {
-    const dbUsername = await this.repository.getUserByUsername(username);
+    const dbUsername = await this.userRepo.getUserByUsername(username);
 
     if (dbUsername !== null) {
       throw new UsernameTakenError();
     }
 
-    const dbEmail = await this.repository.getUserByEmail(email);
+    const dbEmail = await this.userRepo.getUserByEmail(email);
 
     if (dbEmail) {
       throw new DuplicateEmailError();
@@ -31,13 +38,40 @@ export class UserServices {
     const user = this.createUser(email, username);
     const hash = await generatePasswordHash(password);
 
-    const userId = await this.repository.addUserWithPassword(user, hash);
+    const userId = await this.userRepo.addUserWithPassword(user, hash);
 
     if (userId === null) {
       throw new Error();
     }
 
     const token = this.tokenServices.generateToken({ userId }, 24 * 3600);
+
+    return token;
+  }
+
+  private async loggedInUser(loginData: LoginDTO) {
+    const loggedInUser =
+      "email" in loginData
+        ? await this.userRepo.getUserByEmail(loginData.email)
+        : await this.userRepo.getUserByUsername(loginData.username);
+
+    return loggedInUser;
+  }
+
+  public async login(loginData: LoginDTO) {
+    const loggedInUser = await this.loggedInUser(loginData);
+
+    if (loggedInUser === null) {
+      throw new InvalidUsernameOrPasswordError();
+    }
+    const password = await this.passwordRepo.getPasswordHash(loggedInUser.id);
+    const isPasswordTrue = await compare(password ?? "", loginData.password);
+
+    if (!isPasswordTrue) {
+      throw new InvalidUsernameOrPasswordError();
+    }
+
+    const token = this.tokenServices.generateToken({ userId: loggedInUser.id });
 
     return token;
   }
