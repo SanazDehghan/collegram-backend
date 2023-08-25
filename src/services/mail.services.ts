@@ -1,10 +1,9 @@
-import nodemailer, { Transport, Transporter } from "nodemailer";
-import { nonEmptyString } from "~/models/common";
+import nodemailer from "nodemailer";
 import { Email } from "~/models/user.models";
 import { ProcessManager } from "~/utilities/ProcessManager";
 
-class MailService {
-  private transporter!: nodemailer.Transporter;
+export class MailServices {
+  private transporter: nodemailer.Transporter;
 
   constructor() {
     this.transporter = this.createConnection();
@@ -31,7 +30,7 @@ class MailService {
   async sendMail(email: Email, subject: string, text: string) {
     return this.transporter
       .sendMail({
-        from: process.env.SMTP_SMTP_SENDER,
+        from: ProcessManager.get("SMTP_SMTP_SENDER").str,
         to: email,
         subject: subject,
         text: text,
@@ -46,5 +45,3 @@ class MailService {
     return this.transporter.verify();
   }
 }
-
-export const mailService = new MailService();
