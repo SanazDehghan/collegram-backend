@@ -5,6 +5,7 @@ import { Password, PasswordHash } from "~/models/password.models";
 import { BaseUser, Email, User, Username } from "~/models/user.models";
 import { IUserRepo } from "~/repository/user.repo";
 import { DuplicateEmailError, UsernameTakenError } from "~/services/errors/service.errors";
+import { TokenServices } from "~/services/token.services";
 import { UserServices } from "~/services/user.services";
 
 class FakeRepo implements IUserRepo {
@@ -42,9 +43,45 @@ class FakeRepo implements IUserRepo {
 
 const fakeRepo = new FakeRepo();
 
-const userServices = new UserServices(fakeRepo);
+const userServices = new UserServices(fakeRepo, new TokenServices());
 
 describe("Testing User Services", () => {
+  test("should signup", async () => {
+    const baseUser: BaseUser = {
+      email: "testing@email.com" as Email,
+      username: "name" as Username,
+      isPrivate: false,
+    };
+    const password = "pass" as Password;
+
+    await expect(userServices.signup(baseUser.email, baseUser.username, password)).resolves.toBeDefined();
+
+    await expect(userServices.signup("test@email.com" as Email, baseUser.username, password)).rejects.toThrow(
+      DuplicateEmailError,
+    );
+
+    await expect(userServices.signup(baseUser.email, "username" as Username, password)).rejects.toThrow(
+      UsernameTakenError,
+    );
+  });
+
+  test("signup", async () => {
+    const baseUser: BaseUser = {
+      email: "testing@email.com" as Email,
+      username: "name" as Username,
+      isPrivate: false,
+    };
+    const password = "pass" as Password;
+
+    await expect(userServices.signup("test@email.com" as Email, baseUser.username, password)).rejects.toThrow(
+      DuplicateEmailError,
+    );
+
+    await expect(userServices.signup(baseUser.email, "username" as Username, password)).rejects.toThrow(
+      UsernameTakenError,
+    );
+  });
+
   test("signup", async () => {
     const baseUser: BaseUser = {
       email: "testing@email.com" as Email,

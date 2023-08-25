@@ -8,12 +8,15 @@
   "license": "MIT",
   "scripts": {
     "dev": "DOTENV_CONFIG_PATH=./development.env ts-node -r tsconfig-paths/register -r dotenv/config ./src/index.ts",
-    "test": "DOTENV_CONFIG_PATH=./test.env jest --runInBand"
+    "test": "DOTENV_CONFIG_PATH=./test.env jest --runInBand",
+    "test:e2e": "DOTENV_CONFIG_PATH=./test.env jest --runInBand ./tests/e2e"
   },
   "dependencies": {
+    "@types/jsonwebtoken": "^9.0.2",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.1",
     "pg": "^8.11.3",
     "reflect-metadata": "^0.1.13",
     "typeorm": "^0.3.17",

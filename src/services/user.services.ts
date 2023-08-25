@@ -2,10 +2,10 @@ import { Password, generatePasswordHash } from "~/models/password.models";
 import { Email, Username, BaseUser } from "~/models/user.models";
 import { IUserRepo } from "~/repository/user.repo";
 import { DuplicateEmailError, UsernameTakenError } from "./errors/service.errors";
-import { generateToken } from "./token.services";
+import { TokenServices } from "./token.services";
 
 export class UserServices {
-  constructor(private repository: IUserRepo) {}
+  constructor(private repository: IUserRepo, private tokenServices: TokenServices) {}
 
   private createUser(email: Email, username: Username): BaseUser {
     return {
@@ -37,7 +37,7 @@ export class UserServices {
       throw new Error();
     }
 
-    const token = generateToken({ userId }, 24 * 3600);
+    const token = this.tokenServices.generateToken({ userId }, 24 * 3600);
 
     return token;
   }

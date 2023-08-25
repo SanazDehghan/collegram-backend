@@ -34,8 +34,8 @@ export class App {
     this.express.use(errorHandler());
   }
 
-  private init() {
-    dataManager.init()
+  public async init() {
+    await dataManager.init()
     this.initMiddleware();
     this.initRoutes();
     this.initOutputHandlers();
@@ -45,8 +45,8 @@ export class App {
     return this.express;
   }
 
-  public start() {
-    this.init();
+  public async start() {
+    await this.init();
     this.listen();
   }
 }
