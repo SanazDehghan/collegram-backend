@@ -1,4 +1,4 @@
-import { Password, generatePasswordHash } from "~/models/password.models";
+import { Password, PasswordHash, generatePasswordHash } from "~/models/password.models";
 import { Email, Username, BaseUser } from "~/models/user.models";
 import { IUserRepo } from "~/repository/user.repo";
 import { DuplicateEmailError, InvalidUsernameOrPasswordError, UsernameTakenError } from "./errors/service.errors";
@@ -7,6 +7,9 @@ import { compare } from "bcrypt";
 import { LoginDTO } from "~/controllers/dtos/user.dtos";
 import { IPasswordRepo } from "~/repository/password.repo";
 import { MailServices } from "./mail.services";
+import { UUID } from "crypto";
+import { mailConfig } from "~/template/config"
+import { InvalidEmailError } from "./errors/service.errors"
 
 export class UserServices {
   constructor(
@@ -84,27 +87,23 @@ export class UserServices {
 
   private createEmailRecoveryPassword(email: Email) {
     const resetPasswordLink = this.generateresetPasswordEmail(); // generate link
+    const config = mailConfig(resetPasswordLink)
     return {
       to: email,
-      subject: "Reset Password",
-      text: `Dear User,
-
-          You have requested a password reset for your account.
-          Please click the link below to reset your password:
-      
-          Reset Password Link:${resetPasswordLink}
-      
-          If you did not request a password reset, please ignore this email.
-      
-          Best regards,
-          Collegram-Daltonz`,
-    };
+      subject: config.subject,
+      text: config.text
   }
+}
 
   public async sendEmailRecoveryPassword(email: Email) {
     const info = this.createEmailRecoveryPassword(email);
     const result = await this.mailServices.sendMail(info.to, info.subject, info.text);
     return result;
   }
-  async resetPasswordUser(password: string, uuid: string) {}
+  public async resetPasswordUser(uuid: UUID, password: Password): Promise<boolean> {
+    const passwordHash: PasswordHash = await generatePasswordHash(password);
+    await this.passwordRepo.editPassword(uuid, passwordHash);
+    return true;
+  }
 }
+

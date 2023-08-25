@@ -2,7 +2,15 @@ import { UserServices } from "~/services/user.services";
 import { errorMapper } from "../tools/errorMapper.tools";
 import { BaseRoutes, RouteHandler } from "./base.routes";
 import { appendDTO } from "~/controllers/middleware/appendDto";
-import { LoginDTO, SignupDTO, zodSignupDTO, zodsendPasswordResetEmail } from "~/controllers/dtos/user.dtos";
+import {
+  LoginDTO,
+  ResetPasswordDTO,
+  SendPasswordResetEmailDTO,
+  SignupDTO,
+  zodSetPasswordDTO,
+  zodSignupDTO,
+  zodsendPasswordResetEmailDTO,
+} from "~/controllers/dtos/user.dtos";
 
 export class UserRoutes extends BaseRoutes {
   constructor(private service: UserServices) {
@@ -10,8 +18,8 @@ export class UserRoutes extends BaseRoutes {
 
     this.router.post("/signup", appendDTO(zodSignupDTO), this.signup());
     this.router.post("/login", this.login());
-    this.router.post("/password", appendDTO<typeof zodsendPasswordResetEmail>, this.sendPasswordResetEmail());
-    this.router.put("/password", this.resetPassword());
+    this.router.post("/password", appendDTO(zodsendPasswordResetEmailDTO), this.sendPasswordResetEmail());
+    this.router.put("/password", appendDTO(zodSetPasswordDTO), this.resetPassword());
   }
 
   private signup(): RouteHandler<SignupDTO> {
@@ -41,19 +49,29 @@ export class UserRoutes extends BaseRoutes {
       }
     };
   }
-  private sendPasswordResetEmail(): RouteHandler {
+  private sendPasswordResetEmail(): RouteHandler<SendPasswordResetEmailDTO> {
     return async (req, res, next) => {
-      const userEmail = req.dto;
-      await this.service.sendEmailRecoveryPassword(userEmail);
-      res.data = "send email successfully";
-      next();
+      try {
+        const { email } = req.dto!;
+        await this.service.sendEmailRecoveryPassword(email);
+        res.data = true;
+        next();
+      } catch (error) {
+        next(error);
+      }
     };
   }
 
-  private resetPassword(): RouteHandler {
+  private resetPassword(): RouteHandler<ResetPasswordDTO> {
     return async (req, res, next) => {
-      res.data = "signup";
-      next();
+      try {
+        const { password, uuid } = req.dto!;
+        await this.service.resetPasswordUser(uuid, password);
+        res.data = true;
+        next();
+      } catch (error) {
+        next(error);
+      }
     };
   }
 }
