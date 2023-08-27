@@ -1,3 +1,4 @@
+import { errorMapper } from "../tools/errorMapper.tools";
 import { BaseRoutes, RouteHandler } from "./base.routes";
 
 export class UserRoutes extends BaseRoutes {
@@ -9,8 +10,12 @@ export class UserRoutes extends BaseRoutes {
 
   private signup(): RouteHandler {
     return async (req, res, next) => {
-      res.data = "signup";
-      next();
+      try {
+        res.data = "signup";
+        next();
+      } catch (error) {
+        next(errorMapper(error))
+      }
     };
   }
 }
