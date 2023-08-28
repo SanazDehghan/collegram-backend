@@ -66,7 +66,7 @@ const userServices = new UserServices(fakeRepo, fakePass, new TokenServices, new
 
 describe("work with user", () => {
   test("get user info that not exists in database", async () => {
-    const user = await userServices.getUserInfo(v4() as UUID)
+    const user = await userServices.getUserInfo( "43 " as UUID)
     expect(user).not.toBe(fakeRepo.dbUser)
 }),
   test("get user info that exists in database", async () => {

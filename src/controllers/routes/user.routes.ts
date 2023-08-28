@@ -78,11 +78,17 @@ export class UserRoutes extends BaseRoutes {
   }
 
   private getUserInfo(): RouteHandler{
-    return async(req, res, next) => {
-      const user = req.dto
-      const userInfo = await this.service.getUserInfo(user)
-      res.data = userInfo
-      next()
+      return async(req, res, next) => {
+        try{
+        const user = req.dto
+        const userInfo = await this.service.getUserInfo(user)
+        res.data = userInfo
+        next()
+      }
+      catch(error){
+        next(error)
     }
+    };
+    
   }
 }
