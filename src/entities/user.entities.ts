@@ -2,17 +2,17 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
 import { PasswordsEntity } from "./password.entities";
+import { UUID } from "crypto";
 
 @Entity("users")
 export class UsersEntity {
   @PrimaryGeneratedColumn("uuid")
-  id!: string;
+  id!: UUID;
 
   @Column({ unique: true, length: 64 })
   username!: string;
@@ -35,8 +35,13 @@ export class UsersEntity {
   @Column({ default: false })
   isPrivate!: boolean;
 
-  @OneToOne(() => PasswordsEntity, { cascade: true, onDelete: "CASCADE" })
-  @JoinColumn()
+  @Column({ default: 0 })
+  followers!: number;
+
+  @Column({ default: 0 })
+  followings!: number;
+
+  @OneToOne(() => PasswordsEntity, (password => password.user), { cascade: true, onDelete: "CASCADE" })
   password!: PasswordsEntity;
 
   @CreateDateColumn({ type: "timestamp" })

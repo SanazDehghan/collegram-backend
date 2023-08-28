@@ -35,8 +35,9 @@ class DataManager {
   }
 
   public async cleanDB() {
-    for (const entity of this.getEntities()) {
-      await this.dataSource.getRepository(entity).clear()
+    const entitiesMetadata = this.dataSource.entityMetadatas;
+    for (const meta of entitiesMetadata) {
+      await this.dataSource.query(`TRUNCATE TABLE ${meta.tableName} CASCADE`)
     }
   }
 

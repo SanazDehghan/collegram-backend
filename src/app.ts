@@ -2,6 +2,7 @@ import express from "express";
 import { routes } from "~/controllers";
 import { errorHandler, notFoundHandler, successHandler } from "~/controllers/middleware/output";
 import { ProcessManager } from "~/utilities/ProcessManager";
+import { dataManager } from "./DataManager";
 
 export class App {
   private express = express();
@@ -34,6 +35,7 @@ export class App {
   }
 
   private init() {
+    dataManager.init()
     this.initMiddleware();
     this.initRoutes();
     this.initOutputHandlers();

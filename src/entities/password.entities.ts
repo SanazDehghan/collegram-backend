@@ -1,9 +1,15 @@
-import { Column, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, Entity, JoinColumn, OneToOne, PrimaryColumn, UpdateDateColumn } from "typeorm";
+import { UsersEntity } from "./user.entities";
+import { UUID } from "crypto";
 
 @Entity("passwords")
 export class PasswordsEntity {
-  @PrimaryGeneratedColumn()
-  id!: number;
+  @PrimaryColumn()
+  userId!: UUID;
+
+  @OneToOne(() => UsersEntity, (user) => user.password)
+  @JoinColumn()
+  user!: UsersEntity;
 
   @Column({ length: 60 })
   passwordHash!: string;
