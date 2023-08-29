@@ -1,9 +1,17 @@
 import { UUID } from "crypto";
-import { FindOptionsWhere } from "typeorm";
+import { FindOptionsSelect, FindOptionsWhere } from "typeorm";
 import { dataManager } from "~/DataManager";
 import { UsersEntity } from "~/entities/user.entities";
-import { PasswordHash } from "~/models/password.models";
-import { BaseUser, Email, User, UserWithPasswordHash, Username, zodUser } from "~/models/user.models";
+import { PasswordHash, zodPasswordHash } from "~/models/password.models";
+import {
+  BaseUser,
+  Email,
+  User,
+  UserWithPasswordHash,
+  Username,
+  zodUser,
+  zodUserWithPasswordHash,
+} from "~/models/user.models";
 import { cleanObj } from "~/utilities/object";
 
 export interface IUserRepo {
@@ -12,26 +20,27 @@ export interface IUserRepo {
   getUserByUsername: (username: Username) => Promise<User | null>;
   getUserByEmail: (email: Email) => Promise<User | null>;
   editUser: (userId: UUID, editedUser: Partial<BaseUser>) => Promise<boolean>;
-  getUserWithPasswordHash: (identifier: Email|Username) => Promise<UserWithPasswordHash | null>;
+  getUserWithPasswordHash: (identifier: Email | Username) => Promise<UserWithPasswordHash | null>;
 }
 
 export class UserRepo implements IUserRepo {
   private repository = dataManager.source.getRepository(UsersEntity);
+  private columns: FindOptionsSelect<UsersEntity> = {
+    id: true,
+    username: true,
+    firstName: true,
+    lastName: true,
+    email: true,
+    bio: true,
+    profileUrl: true,
+    isPrivate: true,
+    followers: true,
+    followings: true,
+  };
 
   private async findOne(where: FindOptionsWhere<UsersEntity>) {
     const result = await this.repository.findOne({
-      select: [
-        "id",
-        "username",
-        "firstName",
-        "lastName",
-        "email",
-        "bio",
-        "profileUrl",
-        "isPrivate",
-        "followers",
-        "followings",
-      ],
+      select: this.columns,
       where,
     });
 
@@ -73,5 +82,27 @@ export class UserRepo implements IUserRepo {
     this.repository.save(updatedUser);
 
     return true;
+  }
+
+  public async getUserWithPasswordHash(identifier: Email | Username) {
+    const dbUser = await this.repository.findOne({
+      select: {
+        ...this.columns,
+        password: {
+          passwordHash: true,
+        },
+      },
+      where: [{ username: identifier }, { email: identifier }],
+    });
+
+    if (dbUser === null) {
+      return null;
+    }
+
+    const { password, ...user } = dbUser;
+    const parsedPasswordHash = zodPasswordHash.parse(password.passwordHash);
+    const parsedUser = zodUser.parse(cleanObj(user));
+
+    return { ...parsedUser, passwordHash: parsedPasswordHash };
   }
 }
