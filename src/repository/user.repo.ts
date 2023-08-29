@@ -12,7 +12,6 @@ export interface IUserRepo {
   getUserByUsername: (username: Username) => Promise<User | null>;
   getUserByEmail: (email: Email) => Promise<User | null>;
   editUser: (userId: UUID, editedUser: Partial<BaseUser>) => Promise<boolean>;
-<<<<<<< HEAD
 }
 
 export class UserRepo implements IUserRepo {
@@ -73,80 +72,5 @@ export class UserRepo implements IUserRepo {
     this.repository.save(updatedUser);
 
     return true;
-  }
-=======
->>>>>>> 70cf04f (#3: signup: services added)
-}
-
-export class UserRepo implements IUserRepo {
-  private repository = dataManager.source.getRepository(UsersEntity);
-
-  private async findOne(where: FindOptionsWhere<UsersEntity>) {
-    try {
-      const result = await this.repository.findOne({
-        select: [
-          "id",
-          "username",
-          "firstName",
-          "lastName",
-          "email",
-          "bio",
-          "profileUrl",
-          "isPrivate",
-          "followers",
-          "followings",
-        ],
-        where,
-      });
-
-      return result ? zodUser.parse(cleanObj(result)) : null;
-    } catch (error) {
-      return null;
-    }
-  }
-
-  public async addUserWithPassword(user: BaseUser, passwordHash: PasswordHash) {
-    try {
-      const result = await this.repository.save({
-        ...user,
-        password: {
-          passwordHash: passwordHash,
-        },
-      });
-
-      return result.id;
-    } catch (error) {
-      return null;
-    }
-  }
-
-  public async getUserById(id: UUID) {
-    return await this.findOne({ id });
-  }
-
-  public async getUserByUsername(username: Username) {
-    return await this.findOne({ username });
-  }
-
-  public async getUserByEmail(email: Email) {
-    return await this.findOne({ email });
-  }
-
-  public async editUser(userId: UUID, editedUser: Partial<BaseUser>) {
-    try {
-      const dbUser = await this.repository.findOneBy({ id: userId });
-
-      if (dbUser === null) {
-        return false;
-      }
-
-      const updatedUser = { ...dbUser, ...editedUser };
-
-      this.repository.save(updatedUser);
-
-      return true;
-    } catch (error) {
-      return false;
-    }
   }
 }

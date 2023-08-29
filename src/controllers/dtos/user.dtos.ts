@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { zodPassword } from "~/models/password.models";
 import { zodEmail, zodUsername } from "~/models/user.models";
+import { UUID, randomUUID } from "crypto"
+import { zodUUID } from "~/models/common";
 
 export const zodSignupDTO = z.object({
   email: zodEmail,
@@ -23,3 +25,16 @@ export const zodLoginDTO = z.union([zodLoginByUsername, zodLoginByEmail]);
 export type SignupDTO = z.infer<typeof zodSignupDTO>;
 
 export type LoginDTO = z.infer<typeof zodLoginDTO>;
+
+export const zodsendPasswordResetEmail = z.object({
+    email:zodEmail
+})
+
+export type SendPasswordResetEmailDTO = z.infer<typeof zodsendPasswordResetEmail>
+
+export const zodSetPassword = z.object({
+  password:zodPassword,
+  uuid:zodUUID})
+
+export type ResetPasswordDTO = z.infer<typeof zodSetPassword>
+

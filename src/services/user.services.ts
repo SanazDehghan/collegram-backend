@@ -6,12 +6,14 @@ import { TokenServices } from "./token.services";
 import { compare } from "bcrypt";
 import { LoginDTO } from "~/controllers/dtos/user.dtos";
 import { IPasswordRepo } from "~/repository/password.repo";
+import { MailServices } from "./mail.services";
 
 export class UserServices {
   constructor(
     private userRepo: IUserRepo,
     private passwordRepo: IPasswordRepo,
     private tokenServices: TokenServices,
+    private mailServices: MailServices,
   ) {}
 
   private createUser(email: Email, username: Username): BaseUser {
@@ -75,4 +77,34 @@ export class UserServices {
 
     return token;
   }
+  // how generateresetPasswordLink
+  private generateresetPasswordEmail() {
+    return "";
+  }
+
+  private createEmailRecoveryPassword(email: Email) {
+    const resetPasswordLink = this.generateresetPasswordEmail(); // generate link
+    return {
+      to: email,
+      subject: "Reset Password",
+      text: `Dear User,
+
+          You have requested a password reset for your account.
+          Please click the link below to reset your password:
+      
+          Reset Password Link:${resetPasswordLink}
+      
+          If you did not request a password reset, please ignore this email.
+      
+          Best regards,
+          Collegram-Daltonz`,
+    };
+  }
+
+  public async sendEmailRecoveryPassword(email: Email) {
+    const info = this.createEmailRecoveryPassword(email);
+    const result = await this.mailServices.sendMail(info.to, info.subject, info.text);
+    return result;
+  }
+  async resetPasswordUser(password: string, uuid: string) {}
 }
