@@ -41,14 +41,12 @@ export class UserRoutes extends BaseRoutes {
 
   private login(): RouteHandler<LoginDTO> {
     return async (req, res, next) => {
-      {
-        try {
-          const token = await this.service.login(req.dto!);
-          res.data = { token };
-          next();
-        } catch (error) {
-          next(errorMapper(error));
-        }
+      try {
+        const token = await this.service.login(req.dto!);
+        res.data = { token };
+        next();
+      } catch (error) {
+        next(errorMapper(error));
       }
     };
   }
@@ -83,7 +81,7 @@ export class UserRoutes extends BaseRoutes {
       try {
         const userId = req.uid!;
         const userInfo = await this.service.getUserInfo(userId);
-        
+
         res.data = userInfo;
         next();
       } catch (error) {

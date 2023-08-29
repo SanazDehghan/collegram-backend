@@ -93,6 +93,9 @@ export class UserRepo implements IUserRepo {
         },
       },
       where: [{ username: identifier }, { email: identifier }],
+      relations: {
+        password: true,
+      },
     });
 
     if (dbUser === null) {
