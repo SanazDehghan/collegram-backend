@@ -21,11 +21,11 @@ export type SignupDTO = z.infer<typeof zodSignupDTO>;
 
 export type LoginDTO = z.infer<typeof zodLoginDTO>;
 
-export const zodsendPasswordResetEmailDTO = z.object({
+export const zodSendPasswordResetEmailDTO = z.object({
   email: zodEmail,
 });
 
-export type SendPasswordResetEmailDTO = z.infer<typeof zodsendPasswordResetEmailDTO>;
+export type SendPasswordResetEmailDTO = z.infer<typeof zodSendPasswordResetEmailDTO>;
 
 export const zodSetPasswordDTO = z.object({
   password: zodPassword,
@@ -33,17 +33,3 @@ export const zodSetPasswordDTO = z.object({
 });
 
 export type ResetPasswordDTO = z.infer<typeof zodSetPasswordDTO>;
-
-export const zodUserInfo = z.object({
-  username: zodUsername,
-  firstName: zodNonEmptyString.optional(),
-  lastName: zodNonEmptyString.optional(),
-  email: zodEmail,
-  bio: zodBio.optional(),
-  profileUrl: zodNonEmptyString.optional(),
-  isPrivate: z.boolean(),
-  followers: z.number().int(),
-  followings: z.number().int(),
-})
-
-export type UserInfoDTO = z.infer<typeof zodUserInfo>

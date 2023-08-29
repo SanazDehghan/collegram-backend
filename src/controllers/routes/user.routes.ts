@@ -1,34 +1,28 @@
 import { UserServices } from "~/services/user.services";
 import { errorMapper } from "../tools/errorMapper.tools";
 import { BaseRoutes, RouteHandler } from "./base.routes";
-<<<<<<< HEAD
 import { appendDTO } from "~/controllers/middleware/appendDto";
 import {
   LoginDTO,
   ResetPasswordDTO,
   SendPasswordResetEmailDTO,
   SignupDTO,
+  zodLoginDTO,
   zodSetPasswordDTO,
   zodSignupDTO,
-  zodUserInfo,
-  zodsendPasswordResetEmailDTO,
+  zodSendPasswordResetEmailDTO,
 } from "~/controllers/dtos/user.dtos";
-=======
-import { UserServices } from "../../services/user.services";
-import { LoginDTO, zodLogin } from "../dtos/user.dtos";
-import { appendDTO } from "../middleware/appendDto";
->>>>>>> 3c7ce65... refactoring
+import { appendUID } from "../middleware/auth";
 
 export class UserRoutes extends BaseRoutes {
   constructor(private service: UserServices) {
     super("/users");
 
-<<<<<<< HEAD
     this.router.post("/signup", appendDTO(zodSignupDTO), this.signup());
-    this.router.post("/login", this.login());
-    this.router.post("/password", appendDTO(zodsendPasswordResetEmailDTO), this.sendPasswordResetEmail());
+    this.router.post("/login", appendDTO(zodLoginDTO), this.login());
+    this.router.post("/password", appendDTO(zodSendPasswordResetEmailDTO), this.sendPasswordResetEmail());
     this.router.put("/password", appendDTO(zodSetPasswordDTO), this.resetPassword());
-    this.router.get("/me", appendDTO<typeof zodUserInfo>, this.getUserInfo())
+    this.router.get("/me", appendUID(), this.getUserInfo());
   }
 
   private signup(): RouteHandler<SignupDTO> {
@@ -43,10 +37,6 @@ export class UserRoutes extends BaseRoutes {
         next(errorMapper(error));
       }
     };
-=======
-
-    this.router.post("/login", appendDTO(zodLogin), this.login());
->>>>>>> 3c7ce65... refactoring
   }
 
   private login(): RouteHandler<LoginDTO> {
@@ -88,18 +78,17 @@ export class UserRoutes extends BaseRoutes {
     };
   }
 
-  private getUserInfo(): RouteHandler{
-      return async(req, res, next) => {
-        try{
-        const user = req.dto
-        const userInfo = await this.service.getUserInfo(user)
-        res.data = userInfo
-        next()
+  private getUserInfo(): RouteHandler {
+    return async (req, res, next) => {
+      try {
+        const userId = req.uid!;
+        const userInfo = await this.service.getUserInfo(userId);
+        
+        res.data = userInfo;
+        next();
+      } catch (error) {
+        next(errorMapper(error));
       }
-      catch(error){
-        next(errorMapper(error))
-    }
     };
-    
   }
 }
