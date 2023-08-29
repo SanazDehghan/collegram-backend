@@ -1,15 +1,15 @@
 import { Password, PasswordHash, generatePasswordHash } from "~/models/password.models";
-import { Email, Username, BaseUser } from "~/models/user.models";
+import { Email, Username, BaseUser, User } from "~/models/user.models";
 import { IUserRepo } from "~/repository/user.repo";
-import { DuplicateEmailError, InvalidUsernameOrPasswordError, UsernameTakenError } from "./errors/service.errors";
+import { DuplicateEmailError, InvalidUsernameOrPasswordError, UserNotFound, UsernameTakenError } from "./errors/service.errors";
 import { TokenServices } from "./token.services";
 import { compare } from "bcrypt";
 import { LoginDTO } from "~/controllers/dtos/user.dtos";
 import { IPasswordRepo } from "~/repository/password.repo";
 import { MailServices } from "./mail.services";
 import { UUID } from "crypto";
-import { mailConfig } from "~/template/config"
-import { InvalidEmailError } from "./errors/service.errors"
+import { mailConfig } from "~/template/config";
+import { InvalidEmailError } from "./errors/service.errors";
 
 export class UserServices {
   constructor(
@@ -87,13 +87,13 @@ export class UserServices {
 
   private createEmailRecoveryPassword(email: Email) {
     const resetPasswordLink = this.generateresetPasswordEmail(); // generate link
-    const config = mailConfig(resetPasswordLink)
+    const config = mailConfig(resetPasswordLink);
     return {
       to: email,
       subject: config.subject,
-      text: config.text
+      text: config.text,
+    };
   }
-}
 
   public async sendEmailRecoveryPassword(email: Email) {
     const info = this.createEmailRecoveryPassword(email);
@@ -105,5 +105,12 @@ export class UserServices {
     await this.passwordRepo.editPassword(uuid, passwordHash);
     return true;
   }
-}
 
+  public async getUserInfo(uuid: UUID): Promise<User> {
+    const user = await this.userRepo.getUserById(uuid);
+    if (user === null) {
+      throw new UserNotFound;
+    }
+    return user;
+  }
+}

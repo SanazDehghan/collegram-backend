@@ -9,3 +9,5 @@ export class InvalidTokenError extends ServiceError {}
 export class InvalidUsernameOrPasswordError extends ServiceError {}
 
 export class InvalidEmailError extends ServiceError {}
+
+export class UserNotFound extends ServiceError {}

@@ -9,6 +9,7 @@ import {
   SignupDTO,
   zodSetPasswordDTO,
   zodSignupDTO,
+  zodUserInfo,
   zodsendPasswordResetEmailDTO,
 } from "~/controllers/dtos/user.dtos";
 
@@ -20,6 +21,7 @@ export class UserRoutes extends BaseRoutes {
     this.router.post("/login", this.login());
     this.router.post("/password", appendDTO(zodsendPasswordResetEmailDTO), this.sendPasswordResetEmail());
     this.router.put("/password", appendDTO(zodSetPasswordDTO), this.resetPassword());
+    this.router.get("/me", appendDTO<typeof zodUserInfo>, this.getUserInfo())
   }
 
   private signup(): RouteHandler<SignupDTO> {
@@ -73,5 +75,14 @@ export class UserRoutes extends BaseRoutes {
         next(error);
       }
     };
+  }
+
+  private getUserInfo(): RouteHandler{
+    return async(req, res, next) => {
+      const user = req.dto
+      const userInfo = await this.service.getUserInfo(user)
+      res.data = userInfo
+      next()
+    }
   }
 }
