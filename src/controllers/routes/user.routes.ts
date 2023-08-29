@@ -86,7 +86,7 @@ export class UserRoutes extends BaseRoutes {
         next()
       }
       catch(error){
-        next(error)
+        next(errorMapper(error))
     }
     };
     
