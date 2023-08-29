@@ -10,7 +10,7 @@ jest.mock("bcrypt");
 class UserRepoMock implements IUserRepo {
   private users: User[] = []; // A storage for mock user data
 
-  async addUserWithPassword(user: BaseUser, passwordHash: PasswordHash): Promise<boolean> {
+  async addUserWithPassword(user: BaseUser, passwordHash: PasswordHash){
     return true;
   }
 
