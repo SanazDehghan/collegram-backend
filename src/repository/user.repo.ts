@@ -3,7 +3,7 @@ import { FindOptionsWhere } from "typeorm";
 import { dataManager } from "~/DataManager";
 import { UsersEntity } from "~/entities/user.entities";
 import { PasswordHash } from "~/models/password.models";
-import { BaseUser, Email, User, Username, zodUser } from "~/models/user.models";
+import { BaseUser, Email, User, UserWithPasswordHash, Username, zodUser } from "~/models/user.models";
 import { cleanObj } from "~/utilities/object";
 
 export interface IUserRepo {
@@ -12,6 +12,7 @@ export interface IUserRepo {
   getUserByUsername: (username: Username) => Promise<User | null>;
   getUserByEmail: (email: Email) => Promise<User | null>;
   editUser: (userId: UUID, editedUser: Partial<BaseUser>) => Promise<boolean>;
+  getUserWithPasswordHash: (identifier: Email|Username) => Promise<UserWithPasswordHash | null>;
 }
 
 export class UserRepo implements IUserRepo {

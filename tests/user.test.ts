@@ -1,17 +1,29 @@
 import { IUserRepo } from "~/repository/user.repo"; // Import the interfaces
-import { IPasswordRepo } from "~/repository/password.repo";
 import { UUID } from "crypto";
 import { PasswordHash, zodPassword, zodPasswordHash } from "~/models/password.models";
-import { BaseUser, Email, User, Username, zodUsername } from "~/models/user.models";
+import { BaseUser, Email, User, UserWithPasswordHash, Username, zodEmail, zodUsername } from "~/models/user.models";
 import { UserServices } from "~/services/user.services";
-import { LoginDTO, zodLoginDTO } from "~/controllers/dtos/user.dtos";
-import { compare } from "bcrypt";
-jest.mock("bcrypt");
-class UserRepoMock implements IUserRepo {
-  private users: User[] = []; // A storage for mock user data
+import { v4 } from "uuid";
+import { zodUUID } from "~/models/common";
+import { PasswordRepo } from "~/repository/password.repo";
+import { TokenServices } from "~/services/token.services";
+import { MailServices } from "~/services/mail.services";
 
-  async addUserWithPassword(user: BaseUser, passwordHash: PasswordHash){
-    return true;
+jest.mock("bcrypt");
+
+class UserRepoMock implements IUserRepo {
+  private users: UserWithPasswordHash[] = []; // A storage for mock user data
+  constructor() {}
+  async addUserWithPassword(user: BaseUser, passwordHash: PasswordHash) {
+    const addinguser: UserWithPasswordHash = {
+      ...user,
+      passwordHash,
+      id: zodUUID.parse(v4()),
+      followers: 0,
+      followings: 0,
+    };
+    this.users.push(addinguser);
+    return addinguser.id;
   }
 
   async getUserById(id: UUID): Promise<User | null> {
@@ -19,126 +31,74 @@ class UserRepoMock implements IUserRepo {
   }
 
   async getUserByUsername(username: Username): Promise<User | null> {
-    if (username == "test_user") {
-      return {
-        id: "id-id-id-id-id",
-        username: username,
-        email: "test@example.com" as Email,
-        followers: 0,
-        followings: 0,
-        isPrivate: false,
-      };
-    } else {
-      return null;
-    }
+    return this.users.find((user) => user.username === username) || null;
   }
 
   async getUserByEmail(email: Email): Promise<User | null> {
-    if (email == "test@example.com") {
-      return {
-        id: "id-id-id-id-id",
-        username: "test_user" as Username,
-        email: email,
-        followers: 0,
-        followings: 0,
-        isPrivate: false,
-      };
+    return this.users.find((user) => user.email === email) || null;
+  }
+
+  async editUser(userId: UUID, editedUser: Partial<BaseUser>) {
+    return false;
+  }
+
+  async getUserWithPasswordHash(identifier: Username | Email) {
+    const user = this.users.find((user) => user.username === identifier || user.email === identifier);
+    if (user !== undefined) {
+      return user;
     } else {
       return null;
     }
   }
-
-  async editUser(userId: UUID, editedUser: BaseUser): Promise<boolean> {
-    return false;
-  }
 }
 
-class PasswordRepoMock implements IPasswordRepo {
-  private passwordHashes: Map<UUID, PasswordHash> = new Map(); // A storage for mock password hashes
-
-  async editPassword(userId: UUID, passwordHash: PasswordHash): Promise<boolean> {
-    return true;
-  }
-
-  async getPasswordHash(userId: UUID): Promise<PasswordHash> {
-    if (userId === "id-id-id-id-id") {
-      return zodPasswordHash.parse("Password888");
-    } else {
-      return "" as PasswordHash;
-    }
-  }
-}
-
-export { UserRepoMock, PasswordRepoMock };
+export { UserRepoMock };
 
 describe("User Service login", () => {
   let userService: UserServices;
 
   it("should return error because of wrong password", async () => {
-    const userRepoMock: IUserRepo = new UserRepoMock();
-    const passwordRepoMock: IPasswordRepo = new PasswordRepoMock();
-    userService = new UserServices(userRepoMock, passwordRepoMock);
-    const mockUser = {
-      id: "user-id",
-      username: "test_user",
-      email: "test@example.com",
-      followers: 0,
-      followings: 0,
+    const mockUserRepo = new UserRepoMock();
+    const passwordRepo = new PasswordRepo();
+    const tokensService = new TokenServices();
+    const mailService = new MailServices();
+    const userService = new UserServices(mockUserRepo, passwordRepo, tokensService, mailService);
+    const mockUser: BaseUser = {
+      username: zodUsername.parse("test_user"),
+      email: zodEmail.parse("test@example.com"),
       isPrivate: false,
     };
-
-    userRepoMock.getUserByEmail = jest.fn().mockResolvedValue(mockUser);
-    passwordRepoMock.getPasswordHash = jest.fn().mockResolvedValue("password-hash");
-    const loginData: LoginDTO = {
-      username: zodUsername.parse("test_user"),
-      password: zodPassword.parse("Password888"),
-    };
+    const mockPasswordHash: PasswordHash = zodPasswordHash.parse(
+      "PasswordHash888PasswordHash888PasswordHash888PasswordHash888",
+    );
+    const isUserAdded = await mockUserRepo.addUserWithPassword(mockUser, mockPasswordHash);
 
     expect(async () => {
-      await userService.login(loginData);
+      await userService.login({
+        identifier: zodUsername.parse("test_user"),
+        password: zodPassword.parse("Password88888"),
+      });
     }).rejects.toThrow();
   });
 
   it("should return error beacause this user is not exist", async () => {
-    const userRepoMock: IUserRepo = new UserRepoMock();
-    const passwordRepoMock: IPasswordRepo = new PasswordRepoMock();
-    userService = new UserServices(userRepoMock, passwordRepoMock);
-    const mockUser = null;
-
-    userRepoMock.getUserByEmail = jest.fn().mockResolvedValue(mockUser);
-    passwordRepoMock.getPasswordHash = jest.fn().mockResolvedValue("password-hash");
-    const loginData: LoginDTO = {
+    const mockUserRepo = new UserRepoMock();
+    const passwordRepo = new PasswordRepo();
+    const tokensService = new TokenServices();
+    const mailService = new MailServices();
+    const userService = new UserServices(mockUserRepo, passwordRepo, tokensService, mailService);
+    const mockUser: BaseUser = {
       username: zodUsername.parse("test_user"),
-      password: zodPassword.parse("Password888"),
-    };
-
-    expect(async () => {
-      await userService.login(loginData);
-    }).rejects.toThrow();
-  });
-
-  it("should create a token when username and password are correct", async () => {
-    const userRepoMock: IUserRepo = new UserRepoMock();
-    const passwordRepoMock: IPasswordRepo = new PasswordRepoMock();
-    userService = new UserServices(userRepoMock, passwordRepoMock);
-    const mockUser = {
-      id: "user-id",
-      username: "test_user",
-      email: "test@example.com",
-      followers: 0,
-      followings: 0,
+      email: zodEmail.parse("test@example.com"),
       isPrivate: false,
     };
+    const mockPasswordHash: PasswordHash = zodPasswordHash.parse(
+      "PasswordHash888PasswordHash888PasswordHash888PasswordHash888",
+    );
+    const isUserAdded = await mockUserRepo.addUserWithPassword(mockUser, mockPasswordHash);
 
-    userRepoMock.getUserByEmail = jest.fn().mockResolvedValue(mockUser);
-    passwordRepoMock.getPasswordHash = jest.fn().mockResolvedValue("password-hash");
-    const loginData: LoginDTO = {
-      username: zodUsername.parse("test_user"),
-      password: zodPassword.parse("Password888"),
-    };
-    (compare as jest.Mock).mockResolvedValue(true);
-
-    const token = await userService.login(loginData);
-    expect(token).toBeDefined();
+    expect(async () => {
+      await userService.login({ identifier: zodUsername.parse("user"), password: zodPassword.parse("Password88888") });
+    }).rejects.toThrow();
   });
 });

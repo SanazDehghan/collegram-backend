@@ -1,6 +1,7 @@
 import { UserServices } from "~/services/user.services";
 import { errorMapper } from "../tools/errorMapper.tools";
 import { BaseRoutes, RouteHandler } from "./base.routes";
+<<<<<<< HEAD
 import { appendDTO } from "~/controllers/middleware/appendDto";
 import {
   LoginDTO,
@@ -12,11 +13,17 @@ import {
   zodUserInfo,
   zodsendPasswordResetEmailDTO,
 } from "~/controllers/dtos/user.dtos";
+=======
+import { UserServices } from "../../services/user.services";
+import { LoginDTO, zodLogin } from "../dtos/user.dtos";
+import { appendDTO } from "../middleware/appendDto";
+>>>>>>> 3c7ce65... refactoring
 
 export class UserRoutes extends BaseRoutes {
   constructor(private service: UserServices) {
     super("/users");
 
+<<<<<<< HEAD
     this.router.post("/signup", appendDTO(zodSignupDTO), this.signup());
     this.router.post("/login", this.login());
     this.router.post("/password", appendDTO(zodsendPasswordResetEmailDTO), this.sendPasswordResetEmail());
@@ -36,6 +43,10 @@ export class UserRoutes extends BaseRoutes {
         next(errorMapper(error));
       }
     };
+=======
+
+    this.router.post("/login", appendDTO(zodLogin), this.login());
+>>>>>>> 3c7ce65... refactoring
   }
 
   private login(): RouteHandler<LoginDTO> {

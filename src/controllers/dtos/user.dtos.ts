@@ -10,17 +10,12 @@ export const zodSignupDTO = z.object({
   password: zodPassword,
 });
 
-const zodLoginByUsername = z.object({
-  username: zodUsername,
+const zodIdentifier = z.union([zodEmail, zodUsername]);
+
+export const zodLoginDTO = z.object({
+  identifier: zodIdentifier,
   password: zodPassword,
 });
-
-const zodLoginByEmail = z.object({
-  email: zodEmail,
-  password: zodPassword,
-});
-
-export const zodLoginDTO = z.union([zodLoginByUsername, zodLoginByEmail]);
 
 export type SignupDTO = z.infer<typeof zodSignupDTO>;
 

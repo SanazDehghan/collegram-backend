@@ -54,29 +54,20 @@ export class UserServices {
     return token;
   }
 
-  private async loggedInUser(loginData: LoginDTO) {
-    const loggedInUser =
-      "email" in loginData
-        ? await this.userRepo.getUserByEmail(loginData.email)
-        : await this.userRepo.getUserByUsername(loginData.username);
-
-    return loggedInUser;
-  }
-
   public async login(loginData: LoginDTO) {
-    const loggedInUser = await this.loggedInUser(loginData);
+    const user = await this.userRepo.getUserWithPasswordHash(loginData.identifier)
 
-    if (loggedInUser === null) {
+    if (user === null) {
       throw new InvalidUsernameOrPasswordError();
     }
-    const password = await this.passwordRepo.getPasswordHash(loggedInUser.id);
-    const isPasswordTrue = await compare(password ?? "", loginData.password);
+    const passwordHash = user.passwordHash;
+    const isPasswordTrue = await compare(loginData.password , passwordHash);
 
     if (!isPasswordTrue) {
       throw new InvalidUsernameOrPasswordError();
     }
 
-    const token = this.tokenServices.generateToken({ userId: loggedInUser.id });
+    const token = this.tokenServices.generateToken({ userId: user.id });
 
     return token;
   }
