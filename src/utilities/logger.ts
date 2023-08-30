@@ -14,23 +14,23 @@ class Logger {
     try {
       this.env = zodENV.parse(ProcessManager.get("ENV").str);
     } catch (error) {
-      throw new Error("ENV is not valid.")
+      throw new Error("ENV is not valid.");
     }
   }
 
-  private getTime(){
-    return new Date().toLocaleString()
+  private getTime() {
+    return new Date().toLocaleString();
   }
 
   public log(value: unknown, production = false) {
     if (this.env !== "PRODUCTION" || production) {
-      console.log('\x1b[32m%s\x1b[0m', `[${this.getTime()}]:`, value);
+      console.log("\x1b[32m%s\x1b[0m", `[${this.getTime()}]:`, value);
     }
   }
 
   public error(err: unknown) {
     if (!(err instanceof HttpError || err instanceof ServiceError)) {
-      console.error('\x1b[31m%s\x1b[0m', `[${this.getTime()}]:`, err);
+      console.error("\x1b[31m%s\x1b[0m", `[${this.getTime()}]:`, err);
     }
   }
 }

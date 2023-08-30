@@ -53,12 +53,12 @@ export class UserRoutes extends BaseRoutes {
   private sendPasswordResetEmail(): RouteHandler<SendPasswordResetEmailDTO> {
     return async (req, res, next) => {
       try {
-        const { email } = req.dto!;
-        await this.service.sendEmailRecoveryPassword(email);
-        res.data = true;
+        const { identifier } = req.dto!;
+        const email = await this.service.sendEmailRecoveryPassword({identifier});
+        res.data = { email: email.substring(0, 5) + "*******" + email.substring(9) };
         next();
       } catch (error) {
-        next(error);
+        next(errorMapper(error));
       }
     };
   }

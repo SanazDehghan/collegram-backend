@@ -3,15 +3,7 @@ import { FindOptionsSelect, FindOptionsWhere } from "typeorm";
 import { dataManager } from "~/DataManager";
 import { UsersEntity } from "~/entities/user.entities";
 import { PasswordHash, zodPasswordHash } from "~/models/password.models";
-import {
-  BaseUser,
-  Email,
-  User,
-  UserWithPasswordHash,
-  Username,
-  zodUser,
-  zodUserWithPasswordHash,
-} from "~/models/user.models";
+import { BaseUser, Email, User, UserWithPasswordHash, Username, zodEmail, zodUser } from "~/models/user.models";
 import { cleanObj } from "~/utilities/object";
 
 export interface IUserRepo {
@@ -21,6 +13,7 @@ export interface IUserRepo {
   getUserByEmail: (email: Email) => Promise<User | null>;
   editUser: (userId: UUID, editedUser: Partial<BaseUser>) => Promise<boolean>;
   getUserWithPasswordHash: (identifier: Email | Username) => Promise<UserWithPasswordHash | null>;
+  getEmailByIdentifier: (identifier: Email | Username) => Promise<Email | null>;
 }
 
 export class UserRepo implements IUserRepo {
@@ -107,5 +100,20 @@ export class UserRepo implements IUserRepo {
     const parsedUser = zodUser.parse(cleanObj(user));
 
     return { ...parsedUser, passwordHash: parsedPasswordHash };
+  }
+
+  public async getEmailByIdentifier(identifier: Email | Username) {
+    const user = await this.repository.findOne({
+      select: this.columns,
+      where: [{ username: identifier }, { email: identifier }],
+    });
+
+    if (user === null) {
+      return null;
+    }
+
+    const email: Email = zodEmail.parse(user.email);
+
+    return email;
   }
 }

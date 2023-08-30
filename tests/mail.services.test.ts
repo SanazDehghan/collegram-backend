@@ -1,11 +1,11 @@
 import { zodEmail } from "~/models/user.models";
 import { MailServices } from "~/services/mail.services";
 
-jest.setTimeout(10000)
+jest.setTimeout(10000);
 describe("mailService Test", () => {
   const mailServices = new MailServices();
 
-  beforeEach(()=>{})
+  beforeEach(() => {});
 
   afterAll(() => {
     mailServices.closeConnection();

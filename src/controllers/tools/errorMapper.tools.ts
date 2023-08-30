@@ -15,7 +15,7 @@ const mappings: Mapping[] = [
   [DuplicateEmailError, new ConflictError("This Email has already been registered")],
   [InvalidTokenError, new UnauthorizedError("Token is not valid")],
   [InvalidUsernameOrPasswordError, new UnauthorizedError("Wrong Username or password!")],
-  [UserNotFound, new BadRequestError("User not found")]
+  [UserNotFound, new BadRequestError("User not found")],
 ];
 
 export function errorMapper(error: unknown) {

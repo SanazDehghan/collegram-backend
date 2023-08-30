@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "nodemon",
     "test": "DOTENV_CONFIG_PATH=./test.env jest --runInBand",
-    "test:e2e": "DOTENV_CONFIG_PATH=./test.env jest --runInBand ./tests/e2e"
+    "test:e2e": "DOTENV_CONFIG_PATH=./test.env jest --runInBand ./tests/e2e",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@types/jsonwebtoken": "^9.0.2",

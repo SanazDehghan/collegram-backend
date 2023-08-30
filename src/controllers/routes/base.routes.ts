@@ -6,7 +6,7 @@ export interface CustomRequest<T = any> extends Request {
   uid?: UUID;
 }
 
-export type RouteHandler<T = any> = (req: CustomRequest<T>, res: Response, next: NextFunction) => Promise<any>
+export type RouteHandler<T = any> = (req: CustomRequest<T>, res: Response, next: NextFunction) => Promise<any>;
 
 export abstract class BaseRoutes {
   public router: Router;

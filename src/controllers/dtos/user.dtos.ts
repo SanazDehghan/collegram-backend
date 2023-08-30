@@ -22,7 +22,7 @@ export type SignupDTO = z.infer<typeof zodSignupDTO>;
 export type LoginDTO = z.infer<typeof zodLoginDTO>;
 
 export const zodSendPasswordResetEmailDTO = z.object({
-  email: zodEmail,
+  identifier: zodIdentifier,
 });
 
 export type SendPasswordResetEmailDTO = z.infer<typeof zodSendPasswordResetEmailDTO>;

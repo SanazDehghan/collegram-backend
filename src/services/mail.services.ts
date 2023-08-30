@@ -45,7 +45,7 @@ export class MailServices {
     return this.transporter.verify();
   }
 
-  public closeConnection(){
-    this.transporter.close()
+  public closeConnection() {
+    this.transporter.close();
   }
 }

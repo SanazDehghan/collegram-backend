@@ -1,4 +1,4 @@
-import { DataSource} from "typeorm";
+import { DataSource } from "typeorm";
 import { ProcessManager } from "~/utilities/ProcessManager";
 import { UsersEntity } from "~/entities/user.entities";
 import { PasswordsEntity } from "~/entities/password.entities";
@@ -41,7 +41,7 @@ class DataManager {
   public async cleanDB() {
     const entitiesMetadata = this.dataSource.entityMetadatas;
     for (const meta of entitiesMetadata) {
-      await this.dataSource.query(`TRUNCATE TABLE ${meta.tableName} CASCADE`)
+      await this.dataSource.query(`TRUNCATE TABLE ${meta.tableName} CASCADE`);
     }
   }
 

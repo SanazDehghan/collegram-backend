@@ -20,7 +20,7 @@ export function appendUID(): RequestHandler {
     const auth = req.headers.authorization;
     try {
       const token = zodToken.parse(auth);
-      
+
       const uid = getUserId(token);
 
       req.uid = uid;

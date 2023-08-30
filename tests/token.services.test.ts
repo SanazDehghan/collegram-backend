@@ -4,7 +4,7 @@ import { Token, isToken } from "~/models/token.models";
 import { TokenServices } from "~/services/token.services";
 
 describe("testing token services", () => {
-  const tokenServices = new TokenServices()
+  const tokenServices = new TokenServices();
 
   test("should generate token", () => {
     const token = tokenServices.generateToken({ userId: "user id" as UUID });
@@ -13,19 +13,19 @@ describe("testing token services", () => {
   });
 
   test("should be able to validate token", () => {
-    const id = v4() as UUID
+    const id = v4() as UUID;
 
-    const token = tokenServices.generateToken({ userId: id});
+    const token = tokenServices.generateToken({ userId: id });
 
     expect(tokenServices.validate(token)).toEqual({ userId: id });
   });
 
   test("should be unable to validate", () => {
-    const id = v4() as UUID
+    const id = v4() as UUID;
 
-    const token = tokenServices.generateToken({ userId: id});
+    const token = tokenServices.generateToken({ userId: id });
 
-    const changedToken = token + "a" as Token;
+    const changedToken = (token + "a") as Token;
 
     expect(tokenServices.validate(changedToken)).toBeNull();
   });

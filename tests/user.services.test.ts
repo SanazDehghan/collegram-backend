@@ -103,6 +103,12 @@ class FakeUserRepo implements IUserRepo {
 
     return { ...user, passwordHash };
   }
+
+  async getEmailByIdentifier(identifier: Email | Username) {
+    const user = await this.getUserWithPasswordHash(identifier);
+
+    return user ? user.email : null;
+  }
 }
 
 describe("Testing User Services", () => {
@@ -167,6 +173,17 @@ describe("Testing User Services", () => {
         password: "Password88888" as Password,
       }),
     ).rejects.toThrow(InvalidUsernameOrPasswordError);
+  });
+
+  test("send recovery email: should return error because user not found", async () => {
+    const email = "errorEmail@email.com" as Email;
+    await expect(userServices.sendEmailRecoveryPassword({ identifier: email })).rejects.toThrow(UserNotFound);
+  });
+
+  test("send recovery email: should return user's email", async () => {
+    const email = "test@email.com" as Email;
+    const result = await userServices.sendEmailRecoveryPassword({ identifier: email });
+    expect(result).toBe(email);
   });
 
   test("reset password: reset password", async () => {
