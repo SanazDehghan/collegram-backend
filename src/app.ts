@@ -19,6 +19,7 @@ export class App {
   }
 
   private initMiddleware() {
+    this.express.use(express.urlencoded({ extended: true }));
     this.express.use(express.json());
   }
 
@@ -35,7 +36,7 @@ export class App {
   }
 
   public async init() {
-    await dataManager.init()
+    await dataManager.init();
     this.initMiddleware();
     this.initRoutes();
     this.initOutputHandlers();

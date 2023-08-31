@@ -33,3 +33,15 @@ export class ConflictError extends HttpError {
     super(409, message);
   }
 }
+
+export class LargePayloadError extends HttpError {
+  constructor(message: string) {
+    super(413, message);
+  }
+}
+
+export class UnsupportedMediaError extends HttpError {
+  constructor(message: string) {
+    super(415, message);
+  }
+}
