@@ -2,6 +2,10 @@ import { DataSource} from "typeorm";
 import { ProcessManager } from "~/utilities/ProcessManager";
 import { UsersEntity } from "~/entities/user.entities";
 import { PasswordsEntity } from "~/entities/password.entities";
+import { PostsEntity } from "./entities/post.entities";
+import { TagsEntity } from "./entities/tag.entities";
+import { ImagesEntity } from "./entities/image.entities";
+import { CommentsEntity } from "./entities/comment.entities";
 
 class DataManager {
   private dataSource: DataSource;
@@ -23,7 +27,7 @@ class DataManager {
   }
 
   private getEntities() {
-    return [UsersEntity, PasswordsEntity];
+    return [UsersEntity, PasswordsEntity, PostsEntity, TagsEntity, ImagesEntity, CommentsEntity];
   }
 
   get source() {
