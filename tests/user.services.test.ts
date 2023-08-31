@@ -1,103 +1,185 @@
 import { UUID } from "crypto";
 import { v4 } from "uuid";
-import { nonEmptyString } from "~/models/common";
 import { Password, PasswordHash } from "~/models/password.models";
 import { BaseUser, Email, User, Username } from "~/models/user.models";
+import { IPasswordRepo } from "~/repository/password.repo";
 import { IUserRepo } from "~/repository/user.repo";
-import { DuplicateEmailError, UsernameTakenError } from "~/services/errors/service.errors";
+import {
+  DuplicateEmailError,
+  InvalidUsernameOrPasswordError,
+  UserNotFound,
+  UsernameTakenError,
+} from "~/services/errors/service.errors";
+import { MailServices } from "~/services/mail.services";
 import { TokenServices } from "~/services/token.services";
 import { UserServices } from "~/services/user.services";
 
-class FakeRepo implements IUserRepo {
-  private dbUser: User = {
-    id: v4() as UUID,
-    username: "username" as Username,
-    firstName: "first" as nonEmptyString,
-    lastName: "last" as nonEmptyString,
-    email: "test@email.com" as Email,
-    isPrivate: false,
-    followers: 20,
-    followings: 40,
-  };
+interface DBPassword {
+  userId: UUID;
+  passwordHash: PasswordHash;
+}
+class FakePasswordRepo implements IPasswordRepo {
+  db: DBPassword[] = [];
 
-  async addUserWithPassword(user: BaseUser, passwordHash: PasswordHash) {
-    return this.dbUser.id;
+  addPassword(userId: UUID, passwordHash: PasswordHash) {
+    this.db.push({ userId, passwordHash });
   }
 
-  async getUserById(id: UUID) {
-    return this.dbUser.id === id ? this.dbUser : null;
+  getPasswordHash(userId: UUID) {
+    const pass = this.db.find((p) => p.userId === userId);
+
+    return pass ? pass.passwordHash : null;
   }
 
-  async getUserByUsername(username: Username) {
-    return this.dbUser.username === username ? this.dbUser : null;
-  }
+  async editPassword(userId: UUID, passwordHash: PasswordHash) {
+    const pass = this.db.find((p) => p.userId);
 
-  async getUserByEmail(email: Email) {
-    return this.dbUser.email === email ? this.dbUser : null;
-  }
+    if (pass === undefined) {
+      return false;
+    }
 
-  async editUser(userId: UUID, editedUser: Partial<BaseUser>) {
+    this.db = this.db.map((p) => (p.userId === userId ? { ...p, passwordHash } : p));
+
     return true;
   }
 }
 
-const fakeRepo = new FakeRepo();
+class FakeUserRepo implements IUserRepo {
+  db: User[] = [];
 
-const userServices = new UserServices(fakeRepo, new TokenServices());
+  constructor(private passRepo: FakePasswordRepo) {}
+
+  async addUserWithPassword(user: BaseUser, passwordHash: PasswordHash) {
+    const id = v4() as UUID;
+
+    this.db.push({ ...user, id, followings: 0, followers: 0 });
+    this.passRepo.addPassword(id, passwordHash);
+
+    return id;
+  }
+
+  async getUserById(id: UUID) {
+    const user = this.db.find((u) => u.id === id);
+
+    return user ?? null;
+  }
+
+  async getUserByUsername(username: Username) {
+    const user = this.db.find((u) => u.username === username);
+
+    return user ?? null;
+  }
+
+  async getUserByEmail(email: Email) {
+    const user = this.db.find((u) => u.email === email);
+
+    return user ?? null;
+  }
+
+  async editUser(userId: UUID, editedUser: Partial<BaseUser>) {
+    const user = this.getUserById(userId);
+
+    if (user === null) {
+      return false;
+    }
+
+    this.db = this.db.map((u) => (u.id === userId ? { ...u, ...editedUser } : u));
+
+    return true;
+  }
+
+  async getUserWithPasswordHash(identifier: Email | Username) {
+    const user = this.db.find((u) => u.email === identifier || u.username === identifier);
+
+    if (user === undefined) {
+      return null;
+    }
+
+    const passwordHash = this.passRepo.getPasswordHash(user.id);
+
+    if (passwordHash === null) {
+      return null;
+    }
+
+    return { ...user, passwordHash };
+  }
+}
 
 describe("Testing User Services", () => {
-  test("should signup", async () => {
+  const fakePasswordRepo = new FakePasswordRepo();
+  const fakeUserRepo = new FakeUserRepo(fakePasswordRepo);
+
+  const userServices = new UserServices(fakeUserRepo, fakePasswordRepo, new TokenServices(), new MailServices());
+
+  const baseUser: BaseUser = {
+    email: "test@email.com" as Email,
+    username: "username" as Username,
+    isPrivate: false,
+  };
+  const password = "pass" as Password;
+  let userId: UUID;
+
+  beforeEach(async () => {
+    fakeUserRepo.db = [];
+    fakePasswordRepo.db = [];
+
+    userId = await fakeUserRepo.addUserWithPassword(baseUser, "hash" as PasswordHash);
+  });
+
+  test("signup: should signup", async () => {
+    await expect(userServices.signup("email" as Email, "name" as Username, password)).resolves.toBeDefined();
+  });
+
+  test("signup: should fail due to duplicated email", async () => {
+    await expect(userServices.signup(baseUser.email, "name" as Username, password)).rejects.toThrow(
+      DuplicateEmailError,
+    );
+  });
+
+  test("signup: should fail due to duplicated email", async () => {
     const baseUser: BaseUser = {
-      email: "testing@email.com" as Email,
-      username: "name" as Username,
+      email: "test@email.com" as Email,
+      username: "username" as Username,
       isPrivate: false,
     };
     const password = "pass" as Password;
 
-    await expect(userServices.signup(baseUser.email, baseUser.username, password)).resolves.toBeDefined();
+    fakeUserRepo.addUserWithPassword(baseUser, "hash" as PasswordHash);
 
     await expect(userServices.signup("test@email.com" as Email, baseUser.username, password)).rejects.toThrow(
-      DuplicateEmailError,
-    );
-
-    await expect(userServices.signup(baseUser.email, "username" as Username, password)).rejects.toThrow(
       UsernameTakenError,
     );
   });
 
-  test("signup", async () => {
-    const baseUser: BaseUser = {
-      email: "testing@email.com" as Email,
-      username: "name" as Username,
-      isPrivate: false,
-    };
-    const password = "pass" as Password;
-
-    await expect(userServices.signup("test@email.com" as Email, baseUser.username, password)).rejects.toThrow(
-      DuplicateEmailError,
-    );
-
-    await expect(userServices.signup(baseUser.email, "username" as Username, password)).rejects.toThrow(
-      UsernameTakenError,
-    );
+  test("login: should return error because of wrong password", async () => {
+    await expect(
+      userServices.login({
+        identifier: baseUser.username,
+        password: "Password88888" as Password,
+      }),
+    ).rejects.toThrow(InvalidUsernameOrPasswordError);
   });
 
-  test("signup", async () => {
-    const baseUser: BaseUser = {
-      email: "testing@email.com" as Email,
-      username: "name" as Username,
-      isPrivate: false,
-    };
-    const password = "pass" as Password;
+  test("login: should return error because this user is not exist", async () => {
+    await expect(
+      userServices.login({
+        identifier: "user" as Username,
+        password: "Password88888" as Password,
+      }),
+    ).rejects.toThrow(InvalidUsernameOrPasswordError);
+  });
 
-    await expect(userServices.signup(baseUser.email, baseUser.username, password)).resolves.toBeDefined();
+  test("reset password: reset password", async () => {
+    const pass = "Aw12345678" as Password;
+    await expect(userServices.resetPasswordUser(userId, pass)).resolves.toBe(true);
+  });
 
-    await expect(userServices.signup("test@email.com" as Email, baseUser.username, password)).rejects.toThrow(
-      DuplicateEmailError,
-    );
+  test("user info: get user info that not exists in database", async () => {
+    await expect(userServices.getUserInfo("43" as UUID)).rejects.toThrow(UserNotFound);
+  });
 
-    await expect(userServices.signup(baseUser.email, "username" as Username, password)).rejects.toThrow(
-      UsernameTakenError,
-    );
+  test("user info: get user info that exists in database", async () => {
+    const user = await userServices.getUserInfo(userId);
+    expect(user).toBe(fakeUserRepo.db[0]);
   });
 });
