@@ -5,7 +5,6 @@ import { PasswordHash } from "~/models/password.models";
 
 export interface IPasswordRepo {
   editPassword: (userId: UUID, passwordHash: PasswordHash) => Promise<boolean>;
-  getPasswordHash: (userId: UUID) => Promise<PasswordHash | null>;
 }
 
 export class PasswordRepo implements IPasswordRepo {
@@ -23,11 +22,5 @@ export class PasswordRepo implements IPasswordRepo {
     await this.repository.save(dbPassword);
 
     return true;
-  }
-
-  public async getPasswordHash(userId: UUID) {
-    const dbPassword = await this.repository.findOneBy({ userId });
-
-    return dbPassword ? (dbPassword.passwordHash as PasswordHash) : null;
   }
 }
