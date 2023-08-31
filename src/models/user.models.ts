@@ -64,5 +64,4 @@ const userWithPasswordHash = {
   ...user,
 };
 export const zodUserWithPasswordHash = z.object(userWithPasswordHash).strict();
-export type UserWithPasswordHash = z.infer<typeof zodUserWithPasswordHash>
-
+export type UserWithPasswordHash = z.infer<typeof zodUserWithPasswordHash>;
