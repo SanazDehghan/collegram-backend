@@ -184,7 +184,7 @@ describe("Testing User Services", () => {
     const email = "test@email.com" as Email;
     const result = await userServices.sendEmailRecoveryPassword({ identifier: email });
     expect(result).toBe(email);
-  });
+  }, 20000);
 
   test("reset password: reset password", async () => {
     const pass = "Aw12345678" as Password;

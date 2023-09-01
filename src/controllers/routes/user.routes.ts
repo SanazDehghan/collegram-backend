@@ -54,7 +54,7 @@ export class UserRoutes extends BaseRoutes {
     return async (req, res, next) => {
       try {
         const { identifier } = req.dto!;
-        const email = await this.service.sendEmailRecoveryPassword({identifier});
+        const email = await this.service.sendEmailRecoveryPassword({ identifier });
         res.data = { email: email.substring(0, 5) + "*******" + email.substring(9) };
         next();
       } catch (error) {
