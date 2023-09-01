@@ -18,6 +18,7 @@ function getUserId(token: Token) {
 export function appendUID(): RequestHandler {
   return async (req, _, next) => {
     const auth = req.headers.authorization;
+    
     try {
       const token = zodToken.parse(auth);
 

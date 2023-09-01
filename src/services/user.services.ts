@@ -1,5 +1,5 @@
 import { Password, PasswordHash, generatePasswordHash } from "~/models/password.models";
-import { Email, Username, BaseUser, User, zodUser } from "~/models/user.models";
+import { Email, Username, BaseUser, User } from "~/models/user.models";
 import { IUserRepo } from "~/repository/user.repo";
 import {
   DuplicateEmailError,
@@ -99,7 +99,7 @@ export class UserServices {
       throw new UserNotFound();
     }
     const user = await this.userRepo.getUserByEmail(email);
-    
+
     const info = this.createEmailRecoveryPassword(email, user!.id);
     const result = await this.mailServices.sendMail(info.to, info.subject, info.text);
     return email;
