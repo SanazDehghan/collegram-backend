@@ -40,8 +40,13 @@ export class PostsEntity {
   @Column({ default: false })
   closeFriendsOnly!: boolean;
 
+<<<<<<< HEAD
   @OneToMany(() => CommentsEntity, (comment) => comment.post)
   comments!: CommentsEntity[];
+=======
+  @OneToMany(() => CommentsEntity, (comment) => comment.post, { cascade: true, onDelete: "CASCADE" })
+  comments?: CommentsEntity[];
+>>>>>>> 77fb311 (adding postRepo and add post)
 
   @CreateDateColumn({ type: "timestamp" })
   createdAt!: number;

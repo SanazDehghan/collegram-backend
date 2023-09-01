@@ -13,3 +13,7 @@ export class InvalidEmailError extends ServiceError {}
 export class UserNotFound extends ServiceError {}
 
 export class PostNotFound extends ServiceError {}
+
+export class ForbiddenNumberOfPhotos extends ServiceError {}
+
+export class ForbiddenNumberOfTags extends ServiceError {}

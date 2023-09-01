@@ -6,8 +6,10 @@ import {
   InvalidUsernameOrPasswordError,
   UserNotFound,
   PostNotFound,
+  ForbiddenNumberOfPhotos,
+  ForbiddenNumberOfTags,
 } from "~/services/errors/service.errors";
-import { BadRequestError, ConflictError, HttpError, UnauthorizedError } from "../errors/http.error";
+import { BadRequestError, ConflictError, ForbiddenError, HttpError, UnauthorizedError } from "../errors/http.error";
 
 type Mapping = [typeof ServiceError, HttpError];
 
@@ -18,6 +20,8 @@ const mappings: Mapping[] = [
   [InvalidUsernameOrPasswordError, new UnauthorizedError("Wrong Username or password!")],
   [UserNotFound, new BadRequestError("User not found")],
   [PostNotFound, new BadRequestError("Post not found")],
+  [ForbiddenNumberOfPhotos, new ForbiddenError("You must have at least 1 photo and Maximum 5 photos")],
+  [ForbiddenNumberOfTags, new ForbiddenError("You must have at least 1 tag and Maximum 7 tags")],
 ];
 
 export function errorMapper(error: unknown) {

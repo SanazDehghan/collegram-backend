@@ -18,7 +18,7 @@ export class ImagesEntity {
   size!: number;
 
   @Column()
-  mimeType!: string;
+  mimetype!: string;
 
   @CreateDateColumn({ type: "timestamp" })
   createdAt!: number;

@@ -16,8 +16,14 @@ export class CommentsEntity {
   @PrimaryGeneratedColumn("uuid")
   id!: UUID;
 
+  @Column("uuit")
+  userId!: UUID;
+
   @ManyToOne(() => UsersEntity, (user) => user.comments)
   user?: UsersEntity;
+
+  @Column("uuid")
+  postId!: UUID;
 
   @ManyToOne(() => PostsEntity, (post) => post.comments)
   post!: PostsEntity;
@@ -25,10 +31,10 @@ export class CommentsEntity {
   @Column()
   text!: string;
 
-  @OneToMany(() => CommentsEntity, (reply) => reply.parentComment)
-  replies?: CommentsEntity[];
+  @Column("uuid")
+  commentId?: UUID;
 
-  @ManyToOne(() => CommentsEntity, (parentComment) => parentComment.replies)
+  @ManyToOne(() => CommentsEntity)
   parentComment?: CommentsEntity;
 
   @CreateDateColumn({ type: "timestamp" })

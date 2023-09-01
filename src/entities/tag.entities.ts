@@ -1,4 +1,3 @@
-import { UUID } from "crypto";
 import { Column, CreateDateColumn, Entity, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Tag } from "~/models/tag.models";
 import { PostsEntity } from "./post.entities";
@@ -12,7 +11,7 @@ export class TagsEntity {
   posts!: PostsEntity[];
 
   @Column()
-  value!: Tag;
+  value!: Tag.tagBrand;
 
   @CreateDateColumn({ type: "timestamp" })
   createdAt!: number;
