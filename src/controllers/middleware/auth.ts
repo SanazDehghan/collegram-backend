@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { Token, zodToken } from "~/models/token.models";
+import { Token, zodBearerToken } from "~/models/token.models";
 import { TokenServices } from "~/services/token.services";
 import { UnauthorizedError } from "../errors/http.error";
 
@@ -18,9 +18,9 @@ function getUserId(token: Token) {
 export function appendUID(): RequestHandler {
   return async (req, _, next) => {
     const auth = req.headers.authorization;
-    
+
     try {
-      const token = zodToken.parse(auth);
+      const token = zodBearerToken.parse(auth);
 
       const uid = getUserId(token);
 

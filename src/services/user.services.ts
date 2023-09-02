@@ -3,6 +3,7 @@ import { Email, Username, BaseUser, User } from "~/models/user.models";
 import { IUserRepo } from "~/repository/user.repo";
 import {
   DuplicateEmailError,
+  InvalidTokenError,
   InvalidUsernameOrPasswordError,
   UserNotFound,
   UsernameTakenError,
@@ -105,9 +106,13 @@ export class UserServices {
     return email;
   }
 
-  public async resetPasswordUser(uuid: UUID, password: Password): Promise<boolean> {
+  public async resetPasswordUser(token: Token, password: Password): Promise<boolean> {
+    const tokenData = this.tokenServices.validate(token);
+    if (tokenData === null) {
+      throw new InvalidTokenError();
+    }
     const passwordHash: PasswordHash = await generatePasswordHash(password);
-    await this.passwordRepo.editPassword(uuid, passwordHash);
+    await this.passwordRepo.editPassword(tokenData.userId, passwordHash);
     return true;
   }
 

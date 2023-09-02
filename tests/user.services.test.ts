@@ -1,11 +1,13 @@
 import { UUID } from "crypto";
 import { v4 } from "uuid";
 import { Password, PasswordHash } from "~/models/password.models";
+import { Token } from "~/models/token.models";
 import { BaseUser, Email, User, Username } from "~/models/user.models";
 import { IPasswordRepo } from "~/repository/password.repo";
 import { IUserRepo } from "~/repository/user.repo";
 import {
   DuplicateEmailError,
+  InvalidTokenError,
   InvalidUsernameOrPasswordError,
   UserNotFound,
   UsernameTakenError,
@@ -114,8 +116,9 @@ class FakeUserRepo implements IUserRepo {
 describe("Testing User Services", () => {
   const fakePasswordRepo = new FakePasswordRepo();
   const fakeUserRepo = new FakeUserRepo(fakePasswordRepo);
+  const fakeTokenService = new TokenServices()
 
-  const userServices = new UserServices(fakeUserRepo, fakePasswordRepo, new TokenServices(), new MailServices());
+  const userServices = new UserServices(fakeUserRepo, fakePasswordRepo, fakeTokenService, new MailServices());
 
   const baseUser: BaseUser = {
     email: "test@email.com" as Email,
@@ -186,10 +189,18 @@ describe("Testing User Services", () => {
     expect(result).toBe(email);
   }, 20000);
 
-  test("reset password: reset password", async () => {
+  test("reset password: should reset password", async () => {
+    const token = fakeTokenService.generateToken({userId})
     const pass = "Aw12345678" as Password;
-    await expect(userServices.resetPasswordUser(userId, pass)).resolves.toBe(true);
+    await expect(userServices.resetPasswordUser(token, pass)).resolves.toBe(true);
   });
+
+  test("reset password: should return error because the token is not valid",async () => {
+    const token = fakeTokenService.generateToken({userId})
+    const fakeToken = token.replace("e", "Q") as Token
+    const pass = "Qw123Uy45" as Password
+    await expect(userServices.resetPasswordUser(fakeToken, password)).rejects.toThrow(InvalidTokenError)
+  })
 
   test("user info: get user info that not exists in database", async () => {
     await expect(userServices.getUserInfo("43" as UUID)).rejects.toThrow(UserNotFound);
