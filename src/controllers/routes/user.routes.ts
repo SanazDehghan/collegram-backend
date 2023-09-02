@@ -66,8 +66,8 @@ export class UserRoutes extends BaseRoutes {
   private resetPassword(): RouteHandler<ResetPasswordDTO> {
     return async (req, res, next) => {
       try {
-        const { password, uuid } = req.dto!;
-        await this.service.resetPasswordUser(uuid, password);
+        const { password, token } = req.dto!;
+        await this.service.resetPasswordUser(token, password);
         res.data = true;
         next();
       } catch (error) {
