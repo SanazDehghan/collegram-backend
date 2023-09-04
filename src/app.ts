@@ -3,6 +3,7 @@ import { routes } from "~/controllers";
 import { errorHandler, notFoundHandler, successHandler } from "~/controllers/middleware/output";
 import { ProcessManager } from "~/utilities/ProcessManager";
 import { dataManager } from "./DataManager";
+import cors from "cors";
 
 export class App {
   private express = express();
@@ -21,6 +22,7 @@ export class App {
   private initMiddleware() {
     this.express.use(express.urlencoded({ extended: true }));
     this.express.use(express.json());
+    this.express.use(cors());
   }
 
   private initRoutes() {
