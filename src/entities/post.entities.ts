@@ -21,6 +21,9 @@ export class PostsEntity {
   @PrimaryGeneratedColumn("uuid")
   id!: UUID;
 
+  @Column()
+  userId!: UUID;
+
   @ManyToOne(() => UsersEntity, (user) => user.posts, { nullable: false })
   user!: UsersEntity;
 
