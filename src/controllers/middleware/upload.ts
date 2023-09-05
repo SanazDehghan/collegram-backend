@@ -1,16 +1,64 @@
 import multer, { FileFilterCallback, MulterError } from "multer";
-import { Request } from "express";
+import { Request, RequestHandler } from "express";
 import { ProcessManager } from "~/utilities/ProcessManager";
-import { BadRequestError, LargePayloadError, UnsupportedMediaError } from "../errors/http.error";
-import { RequestHandler } from "express-serve-static-core";
+import { BadRequestError, LargePayloadError, UnauthorizedError, UnsupportedMediaError } from "../errors/http.error";
+import { AnyZodObject, z } from "zod";
+import { UUID } from "crypto";
+import { TokenServices } from "~/services/token.services";
+import { zodToken } from "~/models/token.models";
+import { UploadImage, zodUploadImage } from "~/models/images.model";
 
 class Upload {
   private uploadDir = ProcessManager.get("UPLOAD_DIR").str ?? "uploads";
   private maxFileSize = 10_000_000;
   private mimeTypes = ["image/jpeg", "image/png"];
 
-  public files(field: string, maxCount = 1) {
+  constructor(private tokenServices: TokenServices) {}
+
+  public files(field: string, maxCount: number = 1) {
     return this.wrapper(this.getMulter().array(field, maxCount));
+  }
+
+  public passData<T extends AnyZodObject>(
+    parser: T,
+    fn: (uid: UUID, dto: z.TypeOf<T>, files: UploadImage[]) => RequestHandler,
+  ): RequestHandler {
+    return async (req, res, next) => {
+      try {
+        const id = this.getUserId(req);
+        const files = z.array(zodUploadImage).parse(req.files);
+        const json = this.parseBody(req.body);
+        const dto = parser.parse({ ...req.query, ...req.params, ...json });
+
+        await fn(id, dto, files)(req, res, next);
+      } catch (error) {
+        next(error);
+      }
+    };
+  }
+
+  private parseBody(body: Record<string, string>) {
+    try {
+      const parsedEntries = Object.entries(body).map((item) => [item[0], JSON.parse(item[1])]);
+      const parsedObject = Object.fromEntries(parsedEntries);
+
+      return parsedObject;
+    } catch (error) {
+      throw new BadRequestError("request body format is not valid");
+    }
+  }
+
+  private getUserId(req: Request) {
+    const auth = req.headers.authorization;
+
+    const token = zodToken.parse(auth);
+    const tokenData = this.tokenServices.validate(token);
+
+    if (tokenData === null) {
+      throw new UnauthorizedError("Token is not valid");
+    }
+
+    return tokenData.userId;
   }
 
   private getMulter() {
@@ -65,4 +113,4 @@ class Upload {
   }
 }
 
-export const upload = new Upload();
+export const upload = new Upload(new TokenServices());
