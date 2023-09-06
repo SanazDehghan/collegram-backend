@@ -1,8 +1,10 @@
 import { UUID } from "crypto";
 import { v4 } from "uuid";
+import { nonEmptyString } from "~/models/common";
+import { UploadImage } from "~/models/images.model";
 import { Password, PasswordHash } from "~/models/password.models";
 import { Token } from "~/models/token.models";
-import { BaseUser, Email, User, Username } from "~/models/user.models";
+import { BaseUser, Bio, Email, User, Username } from "~/models/user.models";
 import { IPasswordRepo } from "~/repository/password.repo";
 import { IUserRepo } from "~/repository/user.repo";
 import {
@@ -79,7 +81,7 @@ class FakeUserRepo implements IUserRepo {
   }
 
   async editUser(userId: UUID, editedUser: Partial<BaseUser>) {
-    const user = this.getUserById(userId);
+    const user = await this.getUserById(userId);
 
     if (user === null) {
       return false;
@@ -208,5 +210,50 @@ describe("Testing User Services", () => {
   test("user info: get user info that exists in database", async () => {
     const user = await userServices.getUserInfo(userId);
     expect(user).toBe(fakeUserRepo.db[0]);
+  });
+
+  test("edit user info: should return true by edit all item except photo", async () => {
+    const info = {
+      password: "Qwer1234" as Password,
+      firstName: "test" as nonEmptyString,
+      lastName: "test" as nonEmptyString,
+      bio: "chert" as Bio,
+      is_private: true,
+    };
+    const files: UploadImage[] = [];
+    const status = await userServices.updateUserInfo(userId, info, files);
+    expect(status).toBe(true);
+  });
+
+  test("edit user info: should throw error because user not found", async () => {
+    const fakeUserId = "fake_id" as UUID;
+    const info = {
+      password: "Qwer1234" as Password,
+      firstName: "test" as nonEmptyString,
+      lastName: "test" as nonEmptyString,
+      bio: "chert" as Bio,
+      is_private: true,
+    };
+    const files: UploadImage[] = [];
+
+    await expect(userServices.updateUserInfo(fakeUserId, info, files)).rejects.toThrow(UserNotFound);
+  });
+  test("edit user info: should return true by edit all item", async () => {
+    const info = {
+      password: "Qwer1234" as Password,
+      firstName: "test" as nonEmptyString,
+      lastName: "test" as nonEmptyString,
+      bio: "chert" as Bio,
+      is_private: true,
+    };
+    const files: UploadImage[] = [
+      {
+        path: "url_of_photo",
+        mimetype: "image/jpeg",
+        size: 1,
+      },
+    ];
+    const status = await userServices.updateUserInfo(userId, info, files);
+    expect(status).toBe(true);
   });
 });

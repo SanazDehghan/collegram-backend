@@ -1,6 +1,6 @@
 import { UserServices } from "~/services/user.services";
 import { errorMapper } from "../tools/errorMapper.tools";
-import { BaseRoutes, RouteHandler } from "./base.routes";
+import { BaseRoutes } from "./base.routes";
 import { passObject } from "~/controllers/middleware/passObject";
 import {
   LoginDTO,
@@ -11,9 +11,13 @@ import {
   zodSetPasswordDTO,
   zodSignupDTO,
   zodSendPasswordResetEmailDTO,
+  zodUserInfoDTO,
+  UserInfoDTO,
 } from "~/controllers/dtos/user.dtos";
 import { RequestHandler } from "express";
 import { UUID } from "crypto";
+import { upload } from "../middleware/upload";
+import { UploadImage } from "~/models/images.model";
 
 export class UserRoutes extends BaseRoutes {
   constructor(private service: UserServices) {
@@ -27,6 +31,7 @@ export class UserRoutes extends BaseRoutes {
     );
     this.router.put("/password", passObject.passDTO(zodSetPasswordDTO, this.resetPassword.bind(this)));
     this.router.get("/me", passObject.passUID(this.getUserInfo.bind(this)));
+    this.router.put("/me", upload.files("profileUrl"),upload.passData(zodUserInfoDTO, this.userInfo.bind(this)));
   }
 
   private signup(signUp: SignupDTO): RequestHandler {
@@ -84,10 +89,23 @@ export class UserRoutes extends BaseRoutes {
     return async (req, res, next) => {
       try {
         const uid = id;
-        console.log(uid);
         const userInfo = await this.service.getUserInfo(uid);
 
         res.data = userInfo;
+        next();
+      } catch (error) {
+        next(errorMapper(error));
+      }
+    };
+  }
+
+  private userInfo(id: UUID, info:UserInfoDTO, files:UploadImage[]): RequestHandler {
+    return async (req, res, next) => {
+      try {
+        const userInfo = await this.service.updateUserInfo(id, info, files);
+
+        res.data = userInfo;
+
         next();
       } catch (error) {
         next(errorMapper(error));

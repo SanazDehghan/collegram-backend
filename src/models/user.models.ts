@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Brand, zodNonEmptyString, zodUUID } from "./common";
-import { zodPasswordHash } from "./password.models";
+import { zodPassword, zodPasswordHash } from "./password.models";
 
 export type Username = Brand<string, "username">;
 
@@ -64,4 +64,18 @@ const userWithPasswordHash = {
   ...user,
 };
 export const zodUserWithPasswordHash = z.object(userWithPasswordHash).strict();
+
 export type UserWithPasswordHash = z.infer<typeof zodUserWithPasswordHash>;
+
+const userWithPassword = {
+  password: zodPassword.optional(),
+  firstName: zodNonEmptyString.optional(),
+  lastName: zodNonEmptyString.optional(),
+  email: zodEmail.optional(),
+  bio: zodBio.optional(),
+  isPrivate: z.boolean().optional(),
+};
+
+export const zodUserWithPassword = z.object(userWithPassword).strict();
+
+export type UserWithPassword = z.infer<typeof zodUserWithPassword>;

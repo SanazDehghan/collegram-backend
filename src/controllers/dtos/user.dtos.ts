@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { zodNonEmptyString } from "~/models/common";
 import { zodPassword } from "~/models/password.models";
 import { zodBearerToken, zodToken } from "~/models/token.models";
 import { zodBio, zodEmail, zodUsername } from "~/models/user.models";
@@ -32,3 +33,14 @@ export const zodSetPasswordDTO = z.object({
 });
 
 export type ResetPasswordDTO = z.infer<typeof zodSetPasswordDTO>;
+
+export const zodUserInfoDTO = z.object({
+  firstName: zodNonEmptyString.optional(),
+  lastName: zodNonEmptyString.optional(),
+  email: zodEmail.optional(),
+  bio: zodBio.optional(),
+  isPrivate: z.boolean().optional(),
+  password: zodPassword.optional(),
+});
+
+export type UserInfoDTO = z.infer<typeof zodUserInfoDTO>;

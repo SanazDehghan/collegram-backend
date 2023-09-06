@@ -1,5 +1,5 @@
 import { Password, PasswordHash, generatePasswordHash } from "~/models/password.models";
-import { Email, Username, BaseUser, User } from "~/models/user.models";
+import { Email, Username, BaseUser, User, UserWithPassword } from "~/models/user.models";
 import { IUserRepo } from "~/repository/user.repo";
 import {
   DuplicateEmailError,
@@ -16,6 +16,9 @@ import { MailServices } from "./mail.services";
 import { UUID } from "crypto";
 import { baseUrl, mailConfig } from "~/template/config";
 import { Token } from "~/models/token.models";
+import { UploadImage } from "~/models/images.model";
+import { string } from "zod";
+import { userInfo } from "os";
 
 export class UserServices {
   constructor(
@@ -122,5 +125,29 @@ export class UserServices {
       throw new UserNotFound();
     }
     return user;
+  }
+
+  public editUserWithPhoto(profileUrl: string, userInfo: UserWithPassword) {
+    return {
+      profileUrl,
+      ...userInfo,
+    };
+  }
+  public editUserWithPass(passwordHash: PasswordHash, userInfo: UserWithPassword) {
+    return {
+      passwordHash,
+      ...userInfo,
+    };
+  }
+  public async updateUserInfo(uuid: UUID, info: UserWithPassword, files: UploadImage[]) {
+    const passwordHash = info.password ? await generatePasswordHash(info.password) : undefined;
+    const addprofile = files[0] ? this.editUserWithPhoto(files[0].path, info) : info;
+    const editedUser = passwordHash ? this.editUserWithPass(passwordHash, addprofile) : addprofile;
+    const userStatus = await this.userRepo.editUser(uuid, editedUser);
+    if (userStatus === false) {
+      throw new UserNotFound();
+    }
+
+    return userStatus;
   }
 }

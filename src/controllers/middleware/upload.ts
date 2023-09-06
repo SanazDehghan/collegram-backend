@@ -5,7 +5,7 @@ import { BadRequestError, LargePayloadError, UnauthorizedError, UnsupportedMedia
 import { AnyZodObject, z } from "zod";
 import { UUID } from "crypto";
 import { TokenServices } from "~/services/token.services";
-import { zodToken } from "~/models/token.models";
+import { zodBearerToken, zodToken } from "~/models/token.models";
 import { UploadImage, zodUploadImage } from "~/models/images.model";
 
 class Upload {
@@ -51,7 +51,7 @@ class Upload {
   private getUserId(req: Request) {
     const auth = req.headers.authorization;
 
-    const token = zodToken.parse(auth);
+    const token = zodBearerToken.parse(auth);
     const tokenData = this.tokenServices.validate(token);
 
     if (tokenData === null) {
