@@ -3,10 +3,12 @@ import { z } from "zod";
 import { dataManager } from "~/DataManager";
 import { PostsEntity } from "~/entities/post.entities";
 import { PaginationNumber } from "~/models/common";
-import { MinimalPost, zodMinimalPost } from "~/models/post.models";
+import { MinimalPost, Post, zodMinimalPost, zodPost } from "~/models/post.models";
+import { cleanObj } from "~/utilities/object";
 
 export interface IPostRepo {
   getAllUserPosts: (userId: UUID, limit: PaginationNumber, page: PaginationNumber) => Promise<[MinimalPost[], number]>;
+  getPostDetails: (userId: UUID, postId: UUID) => Promise<Post | null>;
 }
 
 export class PostRepo implements IPostRepo {
@@ -30,5 +32,34 @@ export class PostRepo implements IPostRepo {
     const output: [MinimalPost[], number] = [posts, total];
 
     return output;
+  }
+
+  public async getPostDetails(userId: UUID, postId: UUID) {
+    const result = await this.repository.findOne({
+      select: {
+        id: true,
+        userId: true,
+        description: true,
+        createdAt: true,
+        images: {
+          id: true,
+          path: true,
+        },
+        tags: {
+          value: true,
+        },
+      },
+      relations: { images: true, tags: true },
+      where: { id: postId, userId },
+    });
+
+    if (result === null) {
+      return null;
+    }
+
+    const flattenTags = result.tags.map((tag) => tag.value);
+    const post = cleanObj({ ...result, tags: flattenTags });
+
+    return zodPost.parse(post);
   }
 }

@@ -116,7 +116,7 @@ class FakeUserRepo implements IUserRepo {
 describe("Testing User Services", () => {
   const fakePasswordRepo = new FakePasswordRepo();
   const fakeUserRepo = new FakeUserRepo(fakePasswordRepo);
-  const fakeTokenService = new TokenServices()
+  const fakeTokenService = new TokenServices();
 
   const userServices = new UserServices(fakeUserRepo, fakePasswordRepo, fakeTokenService, new MailServices());
 
@@ -190,17 +190,16 @@ describe("Testing User Services", () => {
   }, 20000);
 
   test("reset password: should reset password", async () => {
-    const token = fakeTokenService.generateToken({userId})
+    const token = fakeTokenService.generateToken({ userId });
     const pass = "Aw12345678" as Password;
     await expect(userServices.resetPasswordUser(token, pass)).resolves.toBe(true);
   });
 
-  test("reset password: should return error because the token is not valid",async () => {
-    const token = fakeTokenService.generateToken({userId})
-    const fakeToken = token.replace("e", "Q") as Token
-    const pass = "Qw123Uy45" as Password
-    await expect(userServices.resetPasswordUser(fakeToken, password)).rejects.toThrow(InvalidTokenError)
-  })
+  test("reset password: should return error because the token is not valid", async () => {
+    const token = fakeTokenService.generateToken({ userId });
+    const fakeToken = token.replace("e", "Q") as Token;
+    await expect(userServices.resetPasswordUser(fakeToken, password)).rejects.toThrow(InvalidTokenError);
+  });
 
   test("user info: get user info that not exists in database", async () => {
     await expect(userServices.getUserInfo("43" as UUID)).rejects.toThrow(UserNotFound);

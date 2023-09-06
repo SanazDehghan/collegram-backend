@@ -35,13 +35,13 @@ export class PostsEntity {
 
   @ManyToMany(() => TagsEntity, (tag) => tag.posts, { cascade: true, onDelete: "CASCADE" })
   @JoinTable()
-  tags?: TagsEntity[];
+  tags!: TagsEntity[];
 
   @Column({ default: false })
   closeFriendsOnly!: boolean;
 
   @OneToMany(() => CommentsEntity, (comment) => comment.post)
-  comments?: CommentsEntity[];
+  comments!: CommentsEntity[];
 
   @CreateDateColumn({ type: "timestamp" })
   createdAt!: number;

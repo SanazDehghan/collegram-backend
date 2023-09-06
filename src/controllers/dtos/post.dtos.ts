@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { zodPaginationNumber } from "~/models/common";
+import { zodPaginationNumber, zodUUID } from "~/models/common";
 
 export const zodGetMyPostsDTO = z.object({
   limit: zodPaginationNumber.default(20),
@@ -7,3 +7,9 @@ export const zodGetMyPostsDTO = z.object({
 });
 
 export type GetMyPostsDTO = z.infer<typeof zodGetMyPostsDTO>;
+
+export const zodGetPostDetailsDTO = z.object({
+  postId: zodUUID,
+});
+
+export type GetPostDetailsDTO = z.infer<typeof zodGetPostDetailsDTO>;

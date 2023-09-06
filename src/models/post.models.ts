@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Brand, zodUUID } from "./common";
 import { zodImage } from "./image.model";
+import { zodTag } from "./tag.models";
 
 export type Description = Brand<string, "description">;
 
@@ -15,4 +16,12 @@ export const zodMinimalPost = z.object({
   images: zodImage,
 });
 
-export type MinimalPost = z.infer<typeof zodMinimalPost>
+export type MinimalPost = z.infer<typeof zodMinimalPost>;
+
+export const zodPost = zodMinimalPost.extend({
+  description: zodDescription,
+  tags: z.array(zodTag),
+  createdAt: z.number().int(),
+});
+
+export type Post = z.infer<typeof zodPost>;

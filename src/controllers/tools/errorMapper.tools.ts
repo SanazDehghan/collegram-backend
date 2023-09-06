@@ -5,6 +5,7 @@ import {
   DuplicateEmailError,
   InvalidUsernameOrPasswordError,
   UserNotFound,
+  PostNotFound,
 } from "~/services/errors/service.errors";
 import { BadRequestError, ConflictError, HttpError, UnauthorizedError } from "../errors/http.error";
 
@@ -16,6 +17,7 @@ const mappings: Mapping[] = [
   [InvalidTokenError, new UnauthorizedError("Token is not valid")],
   [InvalidUsernameOrPasswordError, new UnauthorizedError("Wrong Username or password!")],
   [UserNotFound, new BadRequestError("User not found")],
+  [PostNotFound, new BadRequestError("Post not found")],
 ];
 
 export function errorMapper(error: unknown) {
