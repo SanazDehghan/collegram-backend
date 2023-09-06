@@ -5,7 +5,7 @@ declare global {
   declare namespace Express {
     interface Request {
       dto?: any;
-      uid?: UUID 
+      uid?: UUID;
     }
     interface Response {
       data?: any;

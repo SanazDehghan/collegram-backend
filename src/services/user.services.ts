@@ -1,15 +1,21 @@
 import { Password, PasswordHash, generatePasswordHash } from "~/models/password.models";
 import { Email, Username, BaseUser, User } from "~/models/user.models";
 import { IUserRepo } from "~/repository/user.repo";
-import { DuplicateEmailError, InvalidUsernameOrPasswordError, UserNotFound, UsernameTakenError } from "./errors/service.errors";
+import {
+  DuplicateEmailError,
+  InvalidTokenError,
+  InvalidUsernameOrPasswordError,
+  UserNotFound,
+  UsernameTakenError,
+} from "./errors/service.errors";
 import { TokenServices } from "./token.services";
 import { compare } from "bcrypt";
-import { LoginDTO } from "~/controllers/dtos/user.dtos";
+import { LoginDTO, SendPasswordResetEmailDTO } from "~/controllers/dtos/user.dtos";
 import { IPasswordRepo } from "~/repository/password.repo";
 import { MailServices } from "./mail.services";
 import { UUID } from "crypto";
-import { mailConfig } from "~/template/config";
-import { InvalidEmailError } from "./errors/service.errors";
+import { baseUrl, mailConfig } from "~/template/config";
+import { Token } from "~/models/token.models";
 
 export class UserServices {
   constructor(
@@ -55,13 +61,13 @@ export class UserServices {
   }
 
   public async login(loginData: LoginDTO) {
-    const user = await this.userRepo.getUserWithPasswordHash(loginData.identifier)
+    const user = await this.userRepo.getUserWithPasswordHash(loginData.identifier);
 
     if (user === null) {
       throw new InvalidUsernameOrPasswordError();
     }
     const passwordHash = user.passwordHash;
-    const isPasswordTrue = await compare(loginData.password , passwordHash);
+    const isPasswordTrue = await compare(loginData.password, passwordHash);
 
     if (!isPasswordTrue) {
       throw new InvalidUsernameOrPasswordError();
@@ -71,13 +77,15 @@ export class UserServices {
 
     return token;
   }
-  // how generateresetPasswordLink
-  private generateresetPasswordEmail() {
-    return "";
+
+  private generateResetPasswordEmail(userId: UUID) {
+    const token: Token = this.tokenServices.generateToken({ userId });
+    const url = baseUrl(token);
+    return url;
   }
 
-  private createEmailRecoveryPassword(email: Email) {
-    const resetPasswordLink = this.generateresetPasswordEmail(); // generate link
+  private createEmailRecoveryPassword(email: Email, userId: UUID) {
+    const resetPasswordLink = this.generateResetPasswordEmail(userId); // generate link
     const config = mailConfig(resetPasswordLink);
     return {
       to: email,
@@ -86,21 +94,32 @@ export class UserServices {
     };
   }
 
-  public async sendEmailRecoveryPassword(email: Email) {
-    const info = this.createEmailRecoveryPassword(email);
+  public async sendEmailRecoveryPassword(RecoveryEmail: SendPasswordResetEmailDTO) {
+    const email = await this.userRepo.getEmailByIdentifier(RecoveryEmail.identifier);
+    if (email === null) {
+      throw new UserNotFound();
+    }
+    const user = await this.userRepo.getUserByEmail(email);
+
+    const info = this.createEmailRecoveryPassword(email, user!.id);
     const result = await this.mailServices.sendMail(info.to, info.subject, info.text);
-    return result;
+    return email;
   }
-  public async resetPasswordUser(uuid: UUID, password: Password): Promise<boolean> {
+
+  public async resetPasswordUser(token: Token, password: Password): Promise<boolean> {
+    const tokenData = this.tokenServices.validate(token);
+    if (tokenData === null) {
+      throw new InvalidTokenError();
+    }
     const passwordHash: PasswordHash = await generatePasswordHash(password);
-    await this.passwordRepo.editPassword(uuid, passwordHash);
+    await this.passwordRepo.editPassword(tokenData.userId, passwordHash);
     return true;
   }
 
   public async getUserInfo(uuid: UUID): Promise<User> {
     const user = await this.userRepo.getUserById(uuid);
     if (user === null) {
-      throw new UserNotFound;
+      throw new UserNotFound();
     }
     return user;
   }

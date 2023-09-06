@@ -6,7 +6,7 @@ module.exports = {
   testEnvironment: "node",
   collectCoverage: true,
   coverageReporters: ["text"],
-  setupFiles: ['dotenv/config'],
+  setupFiles: ["dotenv/config"],
   testMatch: ["**/+(*.)+(spec|test).+(ts)?(x)"],
   moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, { prefix: "<rootDir>/src/" }),
 };

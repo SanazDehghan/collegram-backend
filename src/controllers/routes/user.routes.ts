@@ -1,7 +1,7 @@
 import { UserServices } from "~/services/user.services";
 import { errorMapper } from "../tools/errorMapper.tools";
 import { BaseRoutes, RouteHandler } from "./base.routes";
-import { appendDTO } from "~/controllers/middleware/appendDto";
+import { passObject } from "~/controllers/middleware/passObject";
 import {
   LoginDTO,
   ResetPasswordDTO,
@@ -12,23 +12,27 @@ import {
   zodSignupDTO,
   zodSendPasswordResetEmailDTO,
 } from "~/controllers/dtos/user.dtos";
-import { appendUID } from "../middleware/auth";
+import { RequestHandler } from "express";
+import { UUID } from "crypto";
 
 export class UserRoutes extends BaseRoutes {
   constructor(private service: UserServices) {
     super("/users");
 
-    this.router.post("/signup", appendDTO(zodSignupDTO), this.signup());
-    this.router.post("/login", appendDTO(zodLoginDTO), this.login());
-    this.router.post("/password", appendDTO(zodSendPasswordResetEmailDTO), this.sendPasswordResetEmail());
-    this.router.put("/password", appendDTO(zodSetPasswordDTO), this.resetPassword());
-    this.router.get("/me", appendUID(), this.getUserInfo());
+    this.router.post("/signup", passObject.passDTO(zodSignupDTO, this.signup.bind(this)));
+    this.router.post("/login", passObject.passDTO(zodLoginDTO, this.login.bind(this)));
+    this.router.post(
+      "/password",
+      passObject.passDTO(zodSendPasswordResetEmailDTO, this.sendPasswordResetEmail.bind(this)),
+    );
+    this.router.put("/password", passObject.passDTO(zodSetPasswordDTO, this.resetPassword.bind(this)));
+    this.router.get("/me", passObject.passUID(this.getUserInfo.bind(this)));
   }
 
-  private signup(): RouteHandler<SignupDTO> {
+  private signup(signUp: SignupDTO): RequestHandler {
     return async (req, res, next) => {
       try {
-        const { email, username, password } = req.dto!;
+        const { email, username, password } = signUp;
         const token = await this.service.signup(email, username, password);
 
         res.data = { token };
@@ -39,10 +43,10 @@ export class UserRoutes extends BaseRoutes {
     };
   }
 
-  private login(): RouteHandler<LoginDTO> {
+  private login(login: LoginDTO): RequestHandler {
     return async (req, res, next) => {
       try {
-        const token = await this.service.login(req.dto!);
+        const token = await this.service.login(login);
         res.data = { token };
         next();
       } catch (error) {
@@ -50,11 +54,24 @@ export class UserRoutes extends BaseRoutes {
       }
     };
   }
-  private sendPasswordResetEmail(): RouteHandler<SendPasswordResetEmailDTO> {
+  private sendPasswordResetEmail(sendEmailRecoveryPassword: SendPasswordResetEmailDTO): RequestHandler {
     return async (req, res, next) => {
       try {
-        const { email } = req.dto!;
-        await this.service.sendEmailRecoveryPassword(email);
+        const { identifier } = sendEmailRecoveryPassword;
+        const email = await this.service.sendEmailRecoveryPassword({ identifier });
+        res.data = { email: email.substring(0, 5) + "*******" + email.substring(9) };
+        next();
+      } catch (error) {
+        next(errorMapper(error));
+      }
+    };
+  }
+
+  private resetPassword(resetPassword: ResetPasswordDTO): RequestHandler {
+    return async (req, res, next) => {
+      try {
+        const { password, token } = resetPassword;
+        await this.service.resetPasswordUser(token, password);
         res.data = true;
         next();
       } catch (error) {
@@ -63,24 +80,12 @@ export class UserRoutes extends BaseRoutes {
     };
   }
 
-  private resetPassword(): RouteHandler<ResetPasswordDTO> {
+  private getUserInfo(id: UUID): RequestHandler {
     return async (req, res, next) => {
       try {
-        const { password, uuid } = req.dto!;
-        await this.service.resetPasswordUser(uuid, password);
-        res.data = true;
-        next();
-      } catch (error) {
-        next(error);
-      }
-    };
-  }
-
-  private getUserInfo(): RouteHandler {
-    return async (req, res, next) => {
-      try {
-        const userId = req.uid!;
-        const userInfo = await this.service.getUserInfo(userId);
+        const uid = id;
+        console.log(uid);
+        const userInfo = await this.service.getUserInfo(uid);
 
         res.data = userInfo;
         next();

@@ -44,4 +44,8 @@ export class MailServices {
   async verifyConnection() {
     return this.transporter.verify();
   }
+
+  public closeConnection() {
+    this.transporter.close();
+  }
 }

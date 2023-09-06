@@ -1,5 +1,8 @@
 export class HttpError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
     super(message);
   }
 }
@@ -31,5 +34,17 @@ export class NotFoundError extends HttpError {
 export class ConflictError extends HttpError {
   constructor(message: string) {
     super(409, message);
+  }
+}
+
+export class LargePayloadError extends HttpError {
+  constructor(message: string) {
+    super(413, message);
+  }
+}
+
+export class UnsupportedMediaError extends HttpError {
+  constructor(message: string) {
+    super(415, message);
   }
 }
