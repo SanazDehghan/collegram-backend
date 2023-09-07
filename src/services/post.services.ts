@@ -1,16 +1,10 @@
-import { PostImage, zodMimeType, zodPath, zodSize } from "~/models/image.models";
-import { BasePost, Description, zodDescription } from "~/models/post.models";
-import { BaseTag, Tag } from "~/models/tag.models";
-import { IPostRepo } from "~/repository/post.repo";
-import { ForbidenNumberOfPhotos, ForbidenNumberOfTags } from "./errors/service.errors";
-import { zodBio } from "~/models/user.models";
 import { UUID } from "crypto";
+import { PaginationNumber, Pagination, createPagination } from "~/models/common";
+import { BasePost, MinimalPost } from "~/models/post.models";
+import { Tag } from "~/models/tag.models";
 import { IPostRepo } from "~/repository/post.repo";
-import { Pagination, PaginationNumber, createPagination } from "~/models/common";
-import { BasePost, Description, MinimalPost, zodDescription } from "~/models/post.models";
 import { ForbiddenNumberOfPhotos, ForbiddenNumberOfTags, PostNotFound } from "./errors/service.errors";
-import { MulterImage, zodPath, zodSize, zodMimeType } from "~/models/image.models";
-import { BaseTag, Tag } from "~/models/tag.models";
+import { UploadedImage } from "~/models/image.models";
 
 export class PostServices {
   constructor(private postRepo: IPostRepo) {}
@@ -20,18 +14,13 @@ export class PostServices {
     return baseTags;
   }
 
-  public async addPost(
-    post: BasePost.basePostType,
-    images: PostImage.UploadImage[],
-    tags: Tag.tagBrand[],
-    userId: UUID,
-  ) {
+  public async addPost(post: BasePost.basePostType, images: UploadedImage.Type[], tags: Tag.tagBrand[], userId: UUID) {
     if (images.length == 0) {
-      throw new ForbidenNumberOfPhotos();
+      throw new ForbiddenNumberOfPhotos();
     }
 
     if (tags.length > 7) {
-      throw new ForbidenNumberOfTags();
+      throw new ForbiddenNumberOfTags();
     }
 
     const baseTags = this.createBaseTags(tags);

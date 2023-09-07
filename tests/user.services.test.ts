@@ -1,7 +1,7 @@
 import { UUID } from "crypto";
 import { v4 } from "uuid";
 import { nonEmptyString } from "~/models/common";
-import { UploadImage } from "~/models/images.model";
+import { UploadedImage } from "~/models/image.models";
 import { Password, PasswordHash } from "~/models/password.models";
 import { Token } from "~/models/token.models";
 import { BaseUser, Bio, Email, User, Username } from "~/models/user.models";
@@ -220,7 +220,7 @@ describe("Testing User Services", () => {
       bio: "chert" as Bio,
       is_private: true,
     };
-    const files: UploadImage[] = [];
+    const files: UploadedImage.Type[] = [];
     const status = await userServices.updateUserInfo(userId, info, files);
     expect(status).toBe(true);
   });
@@ -234,7 +234,7 @@ describe("Testing User Services", () => {
       bio: "chert" as Bio,
       is_private: true,
     };
-    const files: UploadImage[] = [];
+    const files: UploadedImage.Type[] = [];
 
     await expect(userServices.updateUserInfo(fakeUserId, info, files)).rejects.toThrow(UserNotFound);
   });
@@ -246,9 +246,9 @@ describe("Testing User Services", () => {
       bio: "chert" as Bio,
       is_private: true,
     };
-    const files: UploadImage[] = [
+    const files: UploadedImage.Type[] = [
       {
-        path: "url_of_photo",
+        path: "url_of_photo" as nonEmptyString,
         mimetype: "image/jpeg",
         size: 1,
       },

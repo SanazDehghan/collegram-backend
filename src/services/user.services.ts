@@ -16,9 +16,7 @@ import { MailServices } from "./mail.services";
 import { UUID } from "crypto";
 import { baseUrl, mailConfig } from "~/template/config";
 import { Token } from "~/models/token.models";
-import { UploadImage } from "~/models/images.model";
-import { string } from "zod";
-import { userInfo } from "os";
+import { UploadImageDTO } from "~/controllers/dtos/image.dtos";
 
 export class UserServices {
   constructor(
@@ -139,10 +137,10 @@ export class UserServices {
       ...userInfo,
     };
   }
-  public async updateUserInfo(uuid: UUID, info: UserWithPassword, files: UploadImage[]) {
+  public async updateUserInfo(uuid: UUID, info: UserWithPassword, files: UploadImageDTO.Type[]) {
     const passwordHash = info.password ? await generatePasswordHash(info.password) : undefined;
-    const addprofile = files[0] ? this.editUserWithPhoto(files[0].path, info) : info;
-    const editedUser = passwordHash ? this.editUserWithPass(passwordHash, addprofile) : addprofile;
+    const addProfile = files[0] ? this.editUserWithPhoto(files[0].path, info) : info;
+    const editedUser = passwordHash ? this.editUserWithPass(passwordHash, addProfile) : addProfile;
     const userStatus = await this.userRepo.editUser(uuid, editedUser);
     if (userStatus === false) {
       throw new UserNotFound();

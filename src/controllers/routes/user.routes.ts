@@ -17,7 +17,7 @@ import {
 import { RequestHandler } from "express";
 import { UUID } from "crypto";
 import { upload } from "../middleware/upload";
-import { UploadImage } from "~/models/images.model";
+import { UploadImageDTO } from "~/controllers/dtos/image.dtos";
 
 export class UserRoutes extends BaseRoutes {
   constructor(private service: UserServices) {
@@ -31,7 +31,7 @@ export class UserRoutes extends BaseRoutes {
     );
     this.router.put("/password", passObject.passDTO(zodSetPasswordDTO, this.resetPassword.bind(this)));
     this.router.get("/me", passObject.passUID(this.getUserInfo.bind(this)));
-    this.router.put("/me", upload.files("profileUrl"),upload.passData(zodUserInfoDTO, this.userInfo.bind(this)));
+    this.router.put("/me", upload.files("profileUrl"), upload.passData(zodUserInfoDTO, this.userInfo.bind(this)));
   }
 
   private signup(signUp: SignupDTO): RequestHandler {
@@ -99,7 +99,7 @@ export class UserRoutes extends BaseRoutes {
     };
   }
 
-  private userInfo(id: UUID, info:UserInfoDTO, files:UploadImage[]): RequestHandler {
+  private userInfo(id: UUID, info: UserInfoDTO, files: UploadImageDTO.Type[]): RequestHandler {
     return async (req, res, next) => {
       try {
         const userInfo = await this.service.updateUserInfo(id, info, files);

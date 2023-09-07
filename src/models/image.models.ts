@@ -1,23 +1,24 @@
 import { z } from "zod";
-import { Brand, zodUUID } from "./common";
+import { zodNonEmptyString, zodUUID } from "./common";
 
-export const zodPath = z.string().nonempty();
+export namespace UploadedImage {
+  export const zodMimetype = z.enum(["image/jpeg", "image/png"]);
+  export const zodSize = z.number().int().gt(0);
 
-export type Size = Brand<number, "size">;
-const isSize = (val: number): val is Size => {
-  return val > 0 && val < 10000;
-};
-export const zodSize = z.number().refine(isSize);
-
-export const zodMimeType = z.enum(["image/jpeg", "image/png"]);
-export type MimeType = z.infer<typeof zodMimeType>;
-
-export namespace PostImage {
-  export const zodUploadImage = z.object({
-    path: z.string().nonempty(),
-    mimetype: z.enum(["image/jpeg", "image/png"]),
-    size: z.number().int().gt(0),
+  export const zod = z.object({
+    path: zodNonEmptyString,
+    mimetype: zodMimetype,
+    size: zodSize,
   });
 
-  export type UploadImage = z.TypeOf<typeof zodUploadImage>;
+  export type Type = z.TypeOf<typeof zod>;
+}
+
+export namespace Image {
+  export const zod = z.object({
+    path: zodNonEmptyString,
+    id: zodUUID,
+  });
+
+  export type Type = z.infer<typeof zod>;
 }

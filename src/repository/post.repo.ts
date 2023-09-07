@@ -3,19 +3,16 @@ import { z } from "zod";
 import { dataManager } from "~/DataManager";
 import { PostsEntity } from "~/entities/post.entities";
 import { PaginationNumber } from "~/models/common";
-import { BaseImage } from "~/models/image.models";
+import { UploadedImage } from "~/models/image.models";
 import { BasePost, MinimalPost, Post, zodMinimalPost, zodPost } from "~/models/post.models";
-import { PostImage } from "~/models/image.models";
-import { BasePost } from "~/models/post.models";
 import { BaseTag } from "~/models/tag.models";
-import { User } from "~/models/user.models";
 import { cleanObj } from "~/utilities/object";
 
 export interface IPostRepo {
   addPost: (
     post: BasePost.basePostType,
     tags: BaseTag.baseTagType[],
-    images: PostImage.UploadImage[],
+    images: UploadedImage.Type[],
     userId: UUID,
   ) => Promise<PostsEntity | null>;
   getAllUserPosts: (userId: UUID, limit: PaginationNumber, page: PaginationNumber) => Promise<[MinimalPost[], number]>;
@@ -28,7 +25,7 @@ export class PostRepo implements IPostRepo {
   public async addPost(
     post: BasePost.basePostType,
     tags: BaseTag.baseTagType[],
-    images: PostImage.UploadImage[],
+    images: UploadedImage.Type[],
     userId: UUID,
   ) {
     const result = await this.repository.save({
@@ -38,6 +35,7 @@ export class PostRepo implements IPostRepo {
       images: images,
       tags: tags,
     });
+
     return result;
   }
 

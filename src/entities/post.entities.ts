@@ -24,29 +24,24 @@ export class PostsEntity {
   @Column()
   userId!: UUID;
 
+  @Column({ default: false })
+  closeFriendsOnly!: boolean;
+
+  @Column({ nullable: false, length: 255 })
+  description!: Description;
+
   @ManyToOne(() => UsersEntity, (user) => user.posts, { nullable: false })
   user!: UsersEntity;
 
   @OneToMany(() => ImagesEntity, (image) => image.post, { cascade: true, onDelete: "CASCADE" })
   images!: ImagesEntity[];
 
-  @Column({ nullable: false, length: 255 })
-  description!: Description;
-
   @ManyToMany(() => TagsEntity, (tag) => tag.posts, { cascade: true, onDelete: "CASCADE" })
   @JoinTable()
   tags!: TagsEntity[];
 
-  @Column({ default: false })
-  closeFriendsOnly!: boolean;
-
-<<<<<<< HEAD
   @OneToMany(() => CommentsEntity, (comment) => comment.post)
   comments!: CommentsEntity[];
-=======
-  @OneToMany(() => CommentsEntity, (comment) => comment.post, { cascade: true, onDelete: "CASCADE" })
-  comments?: CommentsEntity[];
->>>>>>> 77fb311 (adding postRepo and add post)
 
   @CreateDateColumn({ type: "timestamp" })
   createdAt!: number;

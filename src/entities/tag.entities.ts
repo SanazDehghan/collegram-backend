@@ -10,7 +10,7 @@ export class TagsEntity {
   @ManyToMany(() => PostsEntity, (post) => post.tags)
   posts!: PostsEntity[];
 
-  @Column()
+  @Column({ unique: true })
   value!: Tag.tagBrand;
 
   @CreateDateColumn({ type: "timestamp" })

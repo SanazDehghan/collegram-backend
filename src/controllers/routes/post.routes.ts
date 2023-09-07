@@ -1,19 +1,24 @@
 import { PostServices } from "~/services/post.services";
-import { ADDPostDTO, GetMyPostsDTO, GetPostDetailsDTO, zodGetMyPostsDTO, zodGetPostDetailsDTO } from "../dtos/post.dtos";
+import {
+  ADDPostDTO,
+  GetMyPostsDTO,
+  GetPostDetailsDTO,
+  zodGetMyPostsDTO,
+  zodGetPostDetailsDTO,
+} from "../dtos/post.dtos";
 import { errorMapper } from "../tools/errorMapper.tools";
 import { BaseRoutes, RouteHandler } from "./base.routes";
 import { RequestHandler } from "express";
 import { UUID } from "crypto";
 import { passObject } from "../middleware/passObject";
-import { MulterImage, zodPath, zodSize, zodMimeType, PostImage } from "~/models/image.models";
-import { Tag, BaseTag } from "~/models/tag.models";
 import { upload } from "../middleware/upload";
+import { UploadImageDTO } from "~/controllers/dtos/image.dtos";
 
 export class PostRoutes extends BaseRoutes {
   constructor(private service: PostServices) {
     super("/posts");
 
-    this.router.post("/add", appendUID, appendDTO(ADDPostDTO.zod), upload.files("photos", 5), this.addPost());
+    this.router.post("/", upload.files("photos", 5), upload.passData(ADDPostDTO.zod, this.addPost.bind(this)));
     this.router.get("/", passObject.passUserDTO(zodGetMyPostsDTO, this.getMyPosts.bind(this)));
     this.router.get("/:postId", passObject.passUserDTO(zodGetPostDetailsDTO, this.getPostDetails.bind(this)));
   }
@@ -44,33 +49,11 @@ export class PostRoutes extends BaseRoutes {
       }
     };
   }
-  
-  private createBaseImage(images: Express.Multer.File[]) {
-    const baseImage: MulterImage.multerImageType[] = [];
-    for (const image of images) {
-      baseImage.push({
-        path: zodPath.parse(image.path),
-        size: zodSize.parse(image.size),
-        mimeType: zodMimeType.parse(image.mimetype),
-      });
-    }
-    return baseImage;
-  }
-  
-  private createBaseTags(tags: Tag.tagBrand[]) {
-    let baseTags: BaseTag.baseTagType[] = [];
-    for (let tag of tags) {
-      baseTags.push({
-        value: Tag.zod.parse(tag),
-      });
-    }
-    return baseTags;
-  }
 
   private addPost(
     userId: UUID,
     dto: ADDPostDTO.AddPostType,
-    files: PostImage.UploadImage[],
+    files: UploadImageDTO.Type[],
   ): RouteHandler<ADDPostDTO.AddPostType> {
     return async (req, res, next) => {
       try {

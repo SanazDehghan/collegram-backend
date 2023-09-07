@@ -1,9 +1,8 @@
 import { z } from "zod";
 import { Brand, zodUUID } from "./common";
-import { zodImage } from "./image.model";
 import { Comment } from "./comment.models";
 import { Tag } from "./tag.models";
-import { PostImage } from "./image.models";
+import { Image, UploadedImage } from "./image.models";
 
 export type Description = Brand<string, "description">;
 
@@ -15,7 +14,7 @@ export const zodDescription = z.string().nonempty().refine(isDescription);
 export const zodMinimalPost = z.object({
   id: zodUUID,
   userId: zodUUID,
-  images: zodImage,
+  images: Image.zod,
 });
 
 export type MinimalPost = z.infer<typeof zodMinimalPost>;
@@ -46,7 +45,7 @@ export namespace BasePost {
 export namespace Post {
   export const items = {
     ...BasePost.items,
-    images: z.array(PostImage.zodUploadImage),
+    images: z.array(UploadedImage.zod),
     tags: z.array(Tag.zod),
     userId: zodUUID,
     comment: Comment.zod,
