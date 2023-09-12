@@ -11,7 +11,7 @@ export interface IUserRepo {
   getUserById: (id: UUID) => Promise<User | null>;
   getUserByUsername: (username: Username) => Promise<User | null>;
   getUserByEmail: (email: Email) => Promise<User | null>;
-  editUser: (userId: UUID, editedUser: Partial<BaseUser>) => Promise<boolean>;
+  editUser: (userId: UUID, editedUser: Partial<UserWithPasswordHash>) => Promise<Partial<UserWithPasswordHash> | null>;
   getUserWithPasswordHash: (identifier: Email | Username) => Promise<UserWithPasswordHash | null>;
   getEmailByIdentifier: (identifier: Email | Username) => Promise<Email | null>;
 }
@@ -63,18 +63,23 @@ export class UserRepo implements IUserRepo {
     return await this.findOne({ email });
   }
 
-  public async editUser(userId: UUID, editedUser: Partial<BaseUser>) {
+  public async editUser(userId: UUID, editedUser: Partial<UserWithPasswordHash>) {
     const dbUser = await this.repository.findOneBy({ id: userId });
 
     if (dbUser === null) {
-      return false;
+      return null;
     }
 
     const updatedUser = { ...dbUser, ...editedUser };
 
-    this.repository.save(updatedUser);
+    this.repository.save({
+      ...updatedUser,
+      password: {
+        passwordHash: editedUser.passwordHash,
+      },
+    });
 
-    return true;
+    return editedUser;
   }
 
   public async getUserWithPasswordHash(identifier: Email | Username) {

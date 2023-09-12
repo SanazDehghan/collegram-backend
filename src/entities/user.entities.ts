@@ -11,6 +11,7 @@ import { PasswordsEntity } from "./password.entities";
 import { UUID } from "crypto";
 import { PostsEntity } from "./post.entities";
 import { CommentsEntity } from "./comment.entities";
+import { ImagesEntity } from "./image.entities";
 
 @Entity("users")
 export class UsersEntity {
@@ -20,8 +21,11 @@ export class UsersEntity {
   @OneToMany(() => PostsEntity, (post) => post.user)
   posts?: PostsEntity[];
 
+  @OneToMany(() => ImagesEntity, (image) => image.user)
+  images!: ImagesEntity[];
+
   @OneToMany(() => CommentsEntity, (comment) => comment.user)
-  comments?: CommentsEntity[];
+  comments!: CommentsEntity[];
 
   @Column({ unique: true, length: 64 })
   username!: string;

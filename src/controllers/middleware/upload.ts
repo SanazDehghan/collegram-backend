@@ -5,8 +5,8 @@ import { BadRequestError, LargePayloadError, UnauthorizedError, UnsupportedMedia
 import { AnyZodObject, z } from "zod";
 import { UUID } from "crypto";
 import { TokenServices } from "~/services/token.services";
-import { zodToken } from "~/models/token.models";
-import { UploadImage, zodUploadImage } from "~/models/images.model";
+import { zodBearerToken } from "~/models/token.models";
+import { UploadImageDTO } from "~/controllers/dtos/image.dtos";
 
 class Upload {
   private uploadDir = ProcessManager.get("UPLOAD_DIR").str ?? "uploads";
@@ -21,12 +21,12 @@ class Upload {
 
   public passData<T extends AnyZodObject>(
     parser: T,
-    fn: (uid: UUID, dto: z.TypeOf<T>, files: UploadImage[]) => RequestHandler,
+    fn: (uid: UUID, dto: z.TypeOf<T>, files: UploadImageDTO.Type[]) => RequestHandler,
   ): RequestHandler {
     return async (req, res, next) => {
       try {
         const id = this.getUserId(req);
-        const files = z.array(zodUploadImage).parse(req.files);
+        const files = z.array(UploadImageDTO.zod).parse(req.files);
         const json = this.parseBody(req.body);
         const dto = parser.parse({ ...req.query, ...req.params, ...json });
 
@@ -51,7 +51,7 @@ class Upload {
   private getUserId(req: Request) {
     const auth = req.headers.authorization;
 
-    const token = zodToken.parse(auth);
+    const token = zodBearerToken.parse(auth);
     const tokenData = this.tokenServices.validate(token);
 
     if (tokenData === null) {

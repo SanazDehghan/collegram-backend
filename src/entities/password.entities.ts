@@ -4,7 +4,7 @@ import { UUID } from "crypto";
 
 @Entity("passwords")
 export class PasswordsEntity {
-  @PrimaryColumn()
+  @PrimaryColumn("uuid")
   userId!: UUID;
 
   @OneToOne(() => UsersEntity, (user) => user.password)

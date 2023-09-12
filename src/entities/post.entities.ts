@@ -21,8 +21,14 @@ export class PostsEntity {
   @PrimaryGeneratedColumn("uuid")
   id!: UUID;
 
-  @Column()
+  @Column("uuid")
   userId!: UUID;
+
+  @Column({ default: false })
+  closeFriendsOnly!: boolean;
+
+  @Column({ nullable: false, length: 255 })
+  description!: Description;
 
   @ManyToOne(() => UsersEntity, (user) => user.posts, { nullable: false })
   user!: UsersEntity;
@@ -30,18 +36,12 @@ export class PostsEntity {
   @OneToMany(() => ImagesEntity, (image) => image.post, { cascade: true, onDelete: "CASCADE" })
   images!: ImagesEntity[];
 
-  @Column({ nullable: false, length: 255 })
-  description!: Description;
-
   @ManyToMany(() => TagsEntity, (tag) => tag.posts, { cascade: true, onDelete: "CASCADE" })
   @JoinTable()
-  tags?: TagsEntity[];
-
-  @Column({ default: false })
-  closeFriendsOnly!: boolean;
+  tags!: TagsEntity[];
 
   @OneToMany(() => CommentsEntity, (comment) => comment.post)
-  comments?: CommentsEntity[];
+  comments!: CommentsEntity[];
 
   @CreateDateColumn({ type: "timestamp" })
   createdAt!: number;

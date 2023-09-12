@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
-import { UUID } from "typeorm/driver/mongodb/bson.typings";
+import { UUID } from "crypto";
 import { UsersEntity } from "./user.entities";
 import { PostsEntity } from "./post.entities";
 
@@ -16,8 +16,14 @@ export class CommentsEntity {
   @PrimaryGeneratedColumn("uuid")
   id!: UUID;
 
+  @Column("uuid")
+  userId!: UUID;
+
   @ManyToOne(() => UsersEntity, (user) => user.comments)
   user?: UsersEntity;
+
+  @Column("uuid")
+  postId!: UUID;
 
   @ManyToOne(() => PostsEntity, (post) => post.comments)
   post!: PostsEntity;
@@ -25,10 +31,10 @@ export class CommentsEntity {
   @Column()
   text!: string;
 
-  @OneToMany(() => CommentsEntity, (reply) => reply.parentComment)
-  replies?: CommentsEntity[];
+  @Column("uuid")
+  parentId?: UUID;
 
-  @ManyToOne(() => CommentsEntity, (parentComment) => parentComment.replies)
+  @ManyToOne(() => CommentsEntity)
   parentComment?: CommentsEntity;
 
   @CreateDateColumn({ type: "timestamp" })

@@ -26,4 +26,4 @@ const transform = (bearer: BearerToken): Token => bearer.split(" ")[1] as Token;
 
 export const zodBearerToken = z.string().nonempty().refine(isBearerToken).transform(transform);
 
-export const  zodToken = z.string().nonempty().refine(isToken)
+export const zodToken = z.string().nonempty().refine(isToken);

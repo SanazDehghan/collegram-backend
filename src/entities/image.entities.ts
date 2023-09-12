@@ -1,12 +1,18 @@
 import { UUID } from "crypto";
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { ColumnMetadata } from "typeorm/metadata/ColumnMetadata";
 import { PostsEntity } from "./post.entities";
+import { UsersEntity } from "./user.entities";
 
 @Entity("images")
 export class ImagesEntity {
   @PrimaryGeneratedColumn("uuid")
   id!: UUID;
+
+  @Column("uuid")
+  userId!: UUID;
+
+  @ManyToOne(() => UsersEntity, (image) => image.images)
+  user!: UsersEntity;
 
   @ManyToOne(() => PostsEntity, (image) => image.images)
   post!: PostsEntity;
@@ -18,7 +24,7 @@ export class ImagesEntity {
   size!: number;
 
   @Column()
-  mimeType!: string;
+  mimetype!: string;
 
   @CreateDateColumn({ type: "timestamp" })
   createdAt!: number;

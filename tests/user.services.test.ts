@@ -1,8 +1,10 @@
 import { UUID } from "crypto";
 import { v4 } from "uuid";
+import { nonEmptyString } from "~/models/common";
+import { UploadedImage } from "~/models/image.models";
 import { Password, PasswordHash } from "~/models/password.models";
 import { Token } from "~/models/token.models";
-import { BaseUser, Email, User, Username } from "~/models/user.models";
+import { BaseUser, Bio, Email, User, Username } from "~/models/user.models";
 import { IPasswordRepo } from "~/repository/password.repo";
 import { IUserRepo } from "~/repository/user.repo";
 import {
@@ -79,15 +81,15 @@ class FakeUserRepo implements IUserRepo {
   }
 
   async editUser(userId: UUID, editedUser: Partial<BaseUser>) {
-    const user = this.getUserById(userId);
+    const user = await this.getUserById(userId);
 
     if (user === null) {
-      return false;
+      return null;
     }
 
     this.db = this.db.map((u) => (u.id === userId ? { ...u, ...editedUser } : u));
 
-    return true;
+    return editedUser;
   }
 
   async getUserWithPasswordHash(identifier: Email | Username) {
@@ -116,7 +118,7 @@ class FakeUserRepo implements IUserRepo {
 describe("Testing User Services", () => {
   const fakePasswordRepo = new FakePasswordRepo();
   const fakeUserRepo = new FakeUserRepo(fakePasswordRepo);
-  const fakeTokenService = new TokenServices()
+  const fakeTokenService = new TokenServices();
 
   const userServices = new UserServices(fakeUserRepo, fakePasswordRepo, fakeTokenService, new MailServices());
 
@@ -190,17 +192,16 @@ describe("Testing User Services", () => {
   }, 20000);
 
   test("reset password: should reset password", async () => {
-    const token = fakeTokenService.generateToken({userId})
+    const token = fakeTokenService.generateToken({ userId });
     const pass = "Aw12345678" as Password;
     await expect(userServices.resetPasswordUser(token, pass)).resolves.toBe(true);
   });
 
-  test("reset password: should return error because the token is not valid",async () => {
-    const token = fakeTokenService.generateToken({userId})
-    const fakeToken = token.replace("e", "Q") as Token
-    const pass = "Qw123Uy45" as Password
-    await expect(userServices.resetPasswordUser(fakeToken, password)).rejects.toThrow(InvalidTokenError)
-  })
+  test("reset password: should return error because the token is not valid", async () => {
+    const token = fakeTokenService.generateToken({ userId });
+    const fakeToken = token.replace("e", "Q") as Token;
+    await expect(userServices.resetPasswordUser(fakeToken, password)).rejects.toThrow(InvalidTokenError);
+  });
 
   test("user info: get user info that not exists in database", async () => {
     await expect(userServices.getUserInfo("43" as UUID)).rejects.toThrow(UserNotFound);
@@ -209,5 +210,50 @@ describe("Testing User Services", () => {
   test("user info: get user info that exists in database", async () => {
     const user = await userServices.getUserInfo(userId);
     expect(user).toBe(fakeUserRepo.db[0]);
+  });
+
+  test("edit user info: should return true by edit all item except photo", async () => {
+    const info = {
+      password: "Qwer1234" as Password,
+      firstName: "test" as nonEmptyString,
+      lastName: "test" as nonEmptyString,
+      bio: "chert" as Bio,
+      is_private: true,
+    };
+    const files: UploadedImage.Type[] = [];
+    const status = await userServices.updateUserInfo(userId, info, files);
+    expect(status).toBeDefined();
+  });
+
+  test("edit user info: should throw error because user not found", async () => {
+    const fakeUserId = "fake_id" as UUID;
+    const info = {
+      password: "Qwer1234" as Password,
+      firstName: "test" as nonEmptyString,
+      lastName: "test" as nonEmptyString,
+      bio: "chert" as Bio,
+      is_private: true,
+    };
+    const files: UploadedImage.Type[] = [];
+
+    await expect(userServices.updateUserInfo(fakeUserId, info, files)).rejects.toThrow(UserNotFound);
+  });
+  test("edit user info: should return true by edit all item", async () => {
+    const info = {
+      password: "Qwer1234" as Password,
+      firstName: "test" as nonEmptyString,
+      lastName: "test" as nonEmptyString,
+      bio: "chert" as Bio,
+      is_private: true,
+    };
+    const files: UploadedImage.Type[] = [
+      {
+        path: "url_of_photo" as nonEmptyString,
+        mimetype: "image/jpeg",
+        size: 1,
+      },
+    ];
+    const status = await userServices.updateUserInfo(userId, info, files);
+    expect(status).toBeDefined();
   });
 });
