@@ -21,7 +21,7 @@ export class PostsEntity {
   @PrimaryGeneratedColumn("uuid")
   id!: UUID;
 
-  @Column()
+  @Column("uuid")
   userId!: UUID;
 
   @Column({ default: false })

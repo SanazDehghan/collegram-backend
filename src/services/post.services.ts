@@ -14,6 +14,12 @@ export class PostServices {
     return baseTags;
   }
 
+  private createBaseImage(images: UploadedImage.Type[], userId: UUID){
+    const baseImage = images.map((image) => ({ userId, ...image }));
+    return baseImage;
+
+  }
+
   public async addPost(post: BasePost.basePostType, images: UploadedImage.Type[], tags: Tag.tagBrand[], userId: UUID) {
     if (images.length == 0) {
       throw new ForbiddenNumberOfPhotos();
@@ -24,6 +30,7 @@ export class PostServices {
     }
 
     const baseTags = this.createBaseTags(tags);
+    //const baseImages = this.createBaseImage(images, userId);
     const addedPost = await this.postRepo.addPost(post, baseTags, images, userId);
 
     return addedPost;

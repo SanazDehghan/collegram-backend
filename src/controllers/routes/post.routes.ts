@@ -60,7 +60,7 @@ export class PostRoutes extends BaseRoutes {
         const tags = dto.tags;
         const basePost = { description: dto.description, closeFriendsOnly: dto.closeFriendsOnly };
         const post = await this.service.addPost(basePost, files, tags, userId);
-        res.data = { post };
+        res.data = post;
 
         next();
       } catch (error) {

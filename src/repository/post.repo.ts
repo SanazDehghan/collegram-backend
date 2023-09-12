@@ -7,6 +7,7 @@ import { UploadedImage } from "~/models/image.models";
 import { BasePost, MinimalPost, Post, zodMinimalPost, zodPost } from "~/models/post.models";
 import { BaseTag } from "~/models/tag.models";
 import { cleanObj } from "~/utilities/object";
+import { TagsEntity } from "../entities/tag.entities";
 
 export interface IPostRepo {
   addPost: (
@@ -21,6 +22,15 @@ export interface IPostRepo {
 
 export class PostRepo implements IPostRepo {
   private repository = dataManager.source.getRepository(PostsEntity);
+  private tagsRepo = dataManager.source.getRepository(TagsEntity);
+
+  private async getTagsToAdd(tags: BaseTag.baseTagType[]): Promise<(BaseTag.baseTagType | TagsEntity)[]> {
+    const dbTags = await this.tagsRepo.findBy(tags);
+    const dbTagsValues = dbTags.map((tag) => tag.value);
+    const newTags = tags.filter((tag) => !dbTagsValues.includes(tag.value));
+
+    return [...dbTags, ...newTags];
+  }
 
   public async addPost(
     post: BasePost.basePostType,
@@ -28,12 +38,16 @@ export class PostRepo implements IPostRepo {
     images: UploadedImage.Type[],
     userId: UUID,
   ) {
+    const tagsToAdd = await this.getTagsToAdd(tags);
+
     const result = await this.repository.save({
       closeFriendsOnly: post.closeFriendsOnly,
       description: post.description,
       userId: userId,
-      images: images,
-      tags: tags,
+      images: images.map((image) => {
+        return { ...image, userId: userId };
+      }),
+      tags: tagsToAdd,
     });
 
     return result;

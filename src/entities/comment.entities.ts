@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
-import { UUID } from "typeorm/driver/mongodb/bson.typings";
+import { UUID } from "crypto";
 import { UsersEntity } from "./user.entities";
 import { PostsEntity } from "./post.entities";
 
