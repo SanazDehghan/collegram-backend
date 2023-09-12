@@ -125,13 +125,13 @@ export class UserServices {
     return user;
   }
 
-  public editUserWithPhoto(profileUrl: string, userInfo: UserWithPassword) {
+  private editUserWithPhoto(profileUrl: string, userInfo: UserWithPassword) {
     return {
       profileUrl,
       ...userInfo,
     };
   }
-  public editUserWithPass(passwordHash: PasswordHash, userInfo: UserWithPassword) {
+  private  editUserWithPass(passwordHash: PasswordHash, userInfo: UserWithPassword) {
     return {
       passwordHash,
       ...userInfo,
@@ -142,7 +142,7 @@ export class UserServices {
     const addProfile = files[0] ? this.editUserWithPhoto(files[0].path, info) : info;
     const editedUser = passwordHash ? this.editUserWithPass(passwordHash, addProfile) : addProfile;
     const userStatus = await this.userRepo.editUser(uuid, editedUser);
-    if (userStatus === false) {
+    if (userStatus === null) {
       throw new UserNotFound();
     }
 

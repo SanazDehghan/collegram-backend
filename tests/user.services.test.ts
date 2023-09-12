@@ -84,12 +84,12 @@ class FakeUserRepo implements IUserRepo {
     const user = await this.getUserById(userId);
 
     if (user === null) {
-      return false;
+      return null;
     }
 
     this.db = this.db.map((u) => (u.id === userId ? { ...u, ...editedUser } : u));
 
-    return true;
+    return editedUser;
   }
 
   async getUserWithPasswordHash(identifier: Email | Username) {

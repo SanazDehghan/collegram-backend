@@ -16,7 +16,7 @@ export class CommentsEntity {
   @PrimaryGeneratedColumn("uuid")
   id!: UUID;
 
-  @Column("uuit")
+  @Column("uuid")
   userId!: UUID;
 
   @ManyToOne(() => UsersEntity, (user) => user.comments)
@@ -32,7 +32,7 @@ export class CommentsEntity {
   text!: string;
 
   @Column("uuid")
-  commentId?: UUID;
+  parentId?: UUID;
 
   @ManyToOne(() => CommentsEntity)
   parentComment?: CommentsEntity;
