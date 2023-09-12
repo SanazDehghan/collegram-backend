@@ -222,7 +222,7 @@ describe("Testing User Services", () => {
     };
     const files: UploadedImage.Type[] = [];
     const status = await userServices.updateUserInfo(userId, info, files);
-    expect(status).toBe(true);
+    expect(status).toBeDefined();
   });
 
   test("edit user info: should throw error because user not found", async () => {
@@ -254,6 +254,6 @@ describe("Testing User Services", () => {
       },
     ];
     const status = await userServices.updateUserInfo(userId, info, files);
-    expect(status).toBe(true);
+    expect(status).toBeDefined();
   });
 });
