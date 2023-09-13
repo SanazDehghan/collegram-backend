@@ -6,6 +6,7 @@ import { PostsEntity } from "./entities/post.entities";
 import { TagsEntity } from "./entities/tag.entities";
 import { ImagesEntity } from "./entities/image.entities";
 import { CommentsEntity } from "./entities/comment.entities";
+import { UserRelationsEntity } from "./entities/userRelations.entities";
 
 class DataManager {
   private dataSource: DataSource;
@@ -27,7 +28,7 @@ class DataManager {
   }
 
   private getEntities() {
-    return [UsersEntity, PasswordsEntity, PostsEntity, TagsEntity, ImagesEntity, CommentsEntity];
+    return [UsersEntity, PasswordsEntity, PostsEntity, TagsEntity, ImagesEntity, CommentsEntity, UserRelationsEntity];
   }
 
   get source() {

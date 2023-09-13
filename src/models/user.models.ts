@@ -6,7 +6,7 @@ export type Username = Brand<string, "username">;
 
 export type Email = Brand<string, "email">;
 
-export const userRelations = ["WAITING", "FOLLOW", "CLOSE", "BLOCKED"] as const;
+export const userRelations = ["REQUESTED", "FOLLOW",  "CLOSE_FRIEND", "BLOCKED"] as const;
 
 export type UserRelations = (typeof userRelations)[number];
 
