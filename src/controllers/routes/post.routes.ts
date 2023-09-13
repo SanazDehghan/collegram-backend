@@ -1,6 +1,7 @@
 import { PostServices } from "~/services/post.services";
 import {
   ADDPostDTO,
+  EditPostDTO,
   GetMyPostsDTO,
   GetPostDetailsDTO,
   zodGetMyPostsDTO,
@@ -21,6 +22,22 @@ export class PostRoutes extends BaseRoutes {
     this.router.post("/", upload.files("photos", 5), upload.passData(ADDPostDTO.zod, this.addPost.bind(this)));
     this.router.get("/", passObject.passUserDTO(zodGetMyPostsDTO, this.getMyPosts.bind(this)));
     this.router.get("/:postId", passObject.passUserDTO(zodGetPostDetailsDTO, this.getPostDetails.bind(this)));
+    this.router.put("/:postId", passObject.passUserDTO(EditPostDTO.zod, this.editPost.bind(this)));
+  }
+
+  private editPost(uid: UUID, dto: EditPostDTO.Type): RequestHandler {
+    return async (req, res, next) => {
+      try {
+        const postId = dto.postId;
+        const tags = dto.tags;
+        const basePost = { description: dto.description, closeFriendsOnly: dto.closeFriendsOnly };
+        const result = await this.service.editPost(uid, postId, tags, basePost);
+        res.data = result;
+        next();
+      } catch (error) {
+        next(errorMapper(error));
+      }
+    };
   }
 
   private getMyPosts(uid: UUID, dto: GetMyPostsDTO): RequestHandler {

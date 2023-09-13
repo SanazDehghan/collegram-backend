@@ -55,4 +55,19 @@ export class PostServices {
 
     return post;
   }
+
+
+  public async editPost(userId: UUID, postId: UUID, tags: Tag.tagBrand[], basePost: BasePost.basePostType) {
+    if (tags.length > 7) {
+      throw new ForbiddenNumberOfTags();
+    }
+    const baseTags = this.createBaseTags(tags);
+    const post = await this.postRepo.editPost(userId, postId, baseTags, basePost);
+    if (post === null) {
+      throw new PostNotFound();
+    }
+    return post;
+
+
+  }
 }

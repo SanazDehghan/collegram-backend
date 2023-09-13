@@ -25,3 +25,14 @@ export namespace ADDPostDTO {
 
   export type AddPostType = z.infer<typeof zod>;
 }
+
+export namespace EditPostDTO {
+  export const zod = z.object({
+    description: zodDescription,
+    closeFriendsOnly: z.boolean(),
+    tags:z.array(Tag.zod),
+    postId: zodUUID
+  });
+
+  export type Type = z.infer<typeof zod>;
+}
