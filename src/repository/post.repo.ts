@@ -4,10 +4,11 @@ import { dataManager } from "~/DataManager";
 import { PostsEntity } from "~/entities/post.entities";
 import { PaginationNumber } from "~/models/common";
 import { UploadedImage } from "~/models/image.models";
-import { BasePost, MinimalPost, Post, zodMinimalPost, zodPost } from "~/models/post.models";
+import { BasePost } from "~/models/post.models";
 import { BaseTag } from "~/models/tag.models";
-import { cleanObj } from "~/utilities/object";
 import { TagsEntity } from "../entities/tag.entities";
+import { GetAllUserPostsDAO, PostDetailsDAO } from "./daos/post.daos";
+import { parseDAO } from "./tools/parse";
 
 export interface IPostRepo {
   addPost: (
@@ -15,9 +16,9 @@ export interface IPostRepo {
     tags: BaseTag.baseTagType[],
     images: UploadedImage.Type[],
     userId: UUID,
-  ) => Promise<PostsEntity | null>;
-  getAllUserPosts: (userId: UUID, limit: PaginationNumber, page: PaginationNumber) => Promise<[MinimalPost[], number]>;
-  getPostDetails: (userId: UUID, postId: UUID) => Promise<Post | null>;
+  ) => Promise<PostDetailsDAO.Type | null>;
+  getAllUserPosts: (userId: UUID, limit: PaginationNumber, page: PaginationNumber) => Promise<GetAllUserPostsDAO.Type>;
+  getPostDetails: (userId: UUID, postId: UUID) => Promise<PostDetailsDAO.Type | null>;
 }
 
 export class PostRepo implements IPostRepo {
@@ -50,7 +51,7 @@ export class PostRepo implements IPostRepo {
       tags: tagsToAdd,
     });
 
-    return result;
+    return parseDAO(PostDetailsDAO.zod, result);
   }
 
   public async getAllUserPosts(userId: UUID, limit: PaginationNumber, page: PaginationNumber) {
@@ -65,12 +66,7 @@ export class PostRepo implements IPostRepo {
       skip,
     });
 
-    const posts = z.array(zodMinimalPost).parse(result[0]);
-    const total = result[1];
-
-    const output: [MinimalPost[], number] = [posts, total];
-
-    return output;
+    return parseDAO(GetAllUserPostsDAO.zod, result);
   }
 
   public async getPostDetails(userId: UUID, postId: UUID) {
@@ -79,12 +75,14 @@ export class PostRepo implements IPostRepo {
         id: true,
         userId: true,
         description: true,
-        createdAt: true,
+        closeFriendsOnly: true,
+        updatedAt: true,
         images: {
           id: true,
           path: true,
         },
         tags: {
+          id: true,
           value: true,
         },
       },
@@ -96,9 +94,6 @@ export class PostRepo implements IPostRepo {
       return null;
     }
 
-    const flattenTags = result.tags.map((tag) => tag.value);
-    const post = cleanObj({ ...result, tags: flattenTags });
-
-    return zodPost.parse(post);
+    return parseDAO(PostDetailsDAO.zod, result);
   }
 }

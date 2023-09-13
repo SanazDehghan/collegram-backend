@@ -1,5 +1,5 @@
 import { UUID } from "crypto";
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { PostsEntity } from "./post.entities";
 import { UsersEntity } from "./user.entities";
 

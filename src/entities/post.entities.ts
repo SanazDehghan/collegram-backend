@@ -43,9 +43,9 @@ export class PostsEntity {
   @OneToMany(() => CommentsEntity, (comment) => comment.post)
   comments!: CommentsEntity[];
 
-  @CreateDateColumn({ type: "timestamp" })
-  createdAt!: number;
+  @CreateDateColumn()
+  createdAt!: Date;
 
-  @UpdateDateColumn({ type: "timestamp" })
-  updatedAt!: number;
+  @UpdateDateColumn()
+  updatedAt!: Date;
 }

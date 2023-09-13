@@ -44,6 +44,8 @@ export class PostRoutes extends BaseRoutes {
         const result = await this.service.getPostDetails(uid, dto.postId);
 
         res.data = result;
+
+        next();
       } catch (error) {
         next(errorMapper(error));
       }

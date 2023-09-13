@@ -14,12 +14,6 @@ export class PostServices {
     return baseTags;
   }
 
-  private createBaseImage(images: UploadedImage.Type[], userId: UUID){
-    const baseImage = images.map((image) => ({ userId, ...image }));
-    return baseImage;
-
-  }
-
   public async addPost(post: BasePost.basePostType, images: UploadedImage.Type[], tags: Tag.tagBrand[], userId: UUID) {
     if (images.length == 0) {
       throw new ForbiddenNumberOfPhotos();
@@ -36,14 +30,20 @@ export class PostServices {
     return addedPost;
   }
 
-  public async getAllUserPosts(
-    uid: UUID,
-    limit: PaginationNumber,
-    page: PaginationNumber,
-  ): Promise<Pagination<MinimalPost>> {
+  public async getAllUserPosts(uid: UUID, limit: PaginationNumber, page: PaginationNumber) {
     const [posts, total] = await this.postRepo.getAllUserPosts(uid, limit, page);
 
-    return createPagination(posts, page, limit, total);
+    const singleImagePosts = posts.map((post) => {
+      const { images, ...rest } = post;
+
+      if (images[0] === undefined) {
+        return post;
+      }
+
+      return { ...rest, image: images[0] };
+    });
+
+    return createPagination(singleImagePosts, page, limit, total);
   }
 
   public async getPostDetails(userId: UUID, postId: UUID) {
