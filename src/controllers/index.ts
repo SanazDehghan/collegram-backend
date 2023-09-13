@@ -7,8 +7,18 @@ import { PasswordRepo } from "~/repository/password.repo";
 import { PostRoutes } from "./routes/post.routes";
 import { PostServices } from "~/services/post.services";
 import { PostRepo } from "~/repository/post.repo";
+import { UserRelationsServices } from "~/services/userRelations.services";
+import { UserRelationsRepo } from "~/repository/userRelations.repo";
 
 export const routes = [
-  new UserRoutes(new UserServices(new UserRepo(), new PasswordRepo(), new TokenServices(), new MailServices())),
+  new UserRoutes(
+    new UserServices(
+      new UserRepo(),
+      new PasswordRepo(),
+      new TokenServices(),
+      new UserRelationsServices(new UserRelationsRepo()),
+      new MailServices(),
+    ),
+  ),
   new PostRoutes(new PostServices(new PostRepo())),
 ];

@@ -7,7 +7,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from "typeorm";
-import { UserRelations } from "~/models/user.models";
+import { UserRelationTypes } from "~/models/user.models";
 import { UsersEntity } from "./user.entities";
 import { UUID } from "crypto";
 
@@ -31,7 +31,7 @@ export class UserRelationsEntity {
   user2!: UsersEntity;
 
   @Column({ nullable: false })
-  relationType!: UserRelations;
+  relationType!: UserRelationTypes;
 
   @CreateDateColumn()
   createdAt!: Date;

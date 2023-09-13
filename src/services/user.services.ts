@@ -1,5 +1,5 @@
 import { Password, PasswordHash, generatePasswordHash } from "~/models/password.models";
-import { Email, Username, BaseUser, User, UserWithPassword } from "~/models/user.models";
+import { Email, Username, BaseUser, User, UserWithPassword, UserRelationTypes } from "~/models/user.models";
 import { IUserRepo } from "~/repository/user.repo";
 import {
   DuplicateEmailError,
@@ -17,12 +17,14 @@ import { UUID } from "crypto";
 import { baseUrl, mailConfig } from "~/template/config";
 import { Token } from "~/models/token.models";
 import { UploadImageDTO } from "~/controllers/dtos/image.dtos";
+import { UserRelationsServices } from "./userRelations.services";
 
 export class UserServices {
   constructor(
     private userRepo: IUserRepo,
     private passwordRepo: IPasswordRepo,
     private tokenServices: TokenServices,
+    private relationsServices: UserRelationsServices,
     private mailServices: MailServices,
   ) {}
 
@@ -147,5 +149,14 @@ export class UserServices {
     }
 
     return userStatus;
+  }
+
+  public async follow(uid: UUID, userId: UUID) {
+    const followResult = await this.relationsServices.follow(uid, userId);
+    if (followResult === "FOLLOWED") {
+      await this.userRepo.updateFollow(uid, userId);
+      return "FOLLOWED";
+    }
+    return followResult;
   }
 }

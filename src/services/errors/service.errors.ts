@@ -21,3 +21,5 @@ export class ForbiddenNumberOfTags extends ServiceError {}
 export class CommentNotFound extends ServiceError {}
 
 export class InvalidCommentError extends ServiceError {}
+
+export class ForbiddenFollowUser extends ServiceError {}

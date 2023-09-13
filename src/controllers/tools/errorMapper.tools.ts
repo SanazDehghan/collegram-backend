@@ -8,6 +8,7 @@ import {
   PostNotFound,
   ForbiddenNumberOfPhotos,
   ForbiddenNumberOfTags,
+  ForbiddenFollowUser,
 } from "~/services/errors/service.errors";
 import { BadRequestError, ConflictError, ForbiddenError, HttpError, UnauthorizedError } from "../errors/http.error";
 
@@ -22,6 +23,7 @@ const mappings: Mapping[] = [
   [PostNotFound, new BadRequestError("Post not found")],
   [ForbiddenNumberOfPhotos, new ForbiddenError("You must have at least 1 photo and Maximum 5 photos")],
   [ForbiddenNumberOfTags, new ForbiddenError("You must have at least 1 tag and Maximum 7 tags")],
+  [ForbiddenFollowUser, new ForbiddenError("You cannot follow this user")],
 ];
 
 export function errorMapper(error: unknown) {

@@ -7,13 +7,14 @@ import { BaseUser, Email, User, UserWithPasswordHash, Username, zodEmail, zodUse
 import { cleanObj } from "~/utilities/object";
 
 export interface IUserRepo {
-  addUserWithPassword: (user: BaseUser, passwordHash: PasswordHash) => Promise<UUID | null>;
+  addUserWithPassword: (user: BaseUser, passwordHash: PasswordHash) => Promise<UUID>;
   getUserById: (id: UUID) => Promise<User | null>;
   getUserByUsername: (username: Username) => Promise<User | null>;
   getUserByEmail: (email: Email) => Promise<User | null>;
   editUser: (userId: UUID, editedUser: Partial<UserWithPasswordHash>) => Promise<Partial<UserWithPasswordHash> | null>;
   getUserWithPasswordHash: (identifier: Email | Username) => Promise<UserWithPasswordHash | null>;
   getEmailByIdentifier: (identifier: Email | Username) => Promise<Email | null>;
+  updateFollow : (uid: UUID, userId: UUID) => Promise<boolean>;
 }
 
 export class UserRepo implements IUserRepo {
@@ -120,5 +121,18 @@ export class UserRepo implements IUserRepo {
     const email: Email = zodEmail.parse(user.email);
 
     return email;
+  }
+
+  public async updateFollow(uid: UUID, userId: UUID) {
+    const follower = await this.repository.findOneBy({ id: uid });
+    const following = await this.repository.findOneBy({ id: userId });
+    if (follower === null || following === null) {
+      return false;
+    }
+
+    const updateFollower = await this.repository.update(uid, { followings: follower.followings + 1 });
+    const updateFollowing = await this.repository.update(userId, { followers: following.followers + 1 });
+
+    return true;
   }
 }

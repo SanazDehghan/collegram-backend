@@ -12,6 +12,7 @@ import {
   zodSendPasswordResetEmailDTO,
   zodUserInfoDTO,
   UserInfoDTO,
+  followDTO,
 } from "~/controllers/dtos/user.dtos";
 import { upload } from "../middleware/upload";
 
@@ -28,6 +29,7 @@ export class UserRoutes extends BaseRoutes {
     this.router.put("/password", passObject.passDTO(zodSetPasswordDTO, this.resetPassword.bind(this)));
     this.router.get("/me", passObject.passUID(this.getUserInfo.bind(this)));
     this.router.put("/me", upload.files("profileUrl"), upload.passData(zodUserInfoDTO, this.editUserInfo.bind(this)));
+    this.router.post("/follow", passObject.passUserDTO(followDTO.zod, this.follow.bind(this)));
   }
 
   private signup: Handler.DTO<SignupDTO> = (dto) => {
@@ -101,6 +103,18 @@ export class UserRoutes extends BaseRoutes {
         const userInfo = await this.service.updateUserInfo(id, info, files);
 
         this.sendData(res, userInfo);
+      } catch (error) {
+        this.sendError(res, error);
+      }
+    };
+  };
+
+  private follow: Handler.UserDTO<followDTO.Type> = (uid, dto) => {
+    return async (req, res) => {
+      try {
+        const result = await this.service.follow(uid, dto.userId);
+
+        this.sendData(res, result);
       } catch (error) {
         this.sendError(res, error);
       }
