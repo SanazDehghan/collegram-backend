@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Brand, zodUUID } from "./common";
-import { Comment } from "./comment.models";
+import { AddComment } from "./comment.models";
 import { Tag } from "./tag.models";
 import { Image, UploadedImage } from "./image.models";
 import { UUID } from "crypto";
@@ -39,7 +39,7 @@ export namespace Post {
     images: z.array(UploadedImage.zod),
     tags: z.array(Tag.zod),
     userId: zodUUID,
-    comment: Comment.zod,
+    comment: AddComment.zod,
   };
   export const zod = z.object(items).strict();
   export type postType = z.infer<typeof zod>;
