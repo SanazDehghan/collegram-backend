@@ -36,3 +36,10 @@ export namespace EditPostDTO {
 
   export type Type = z.infer<typeof zod>;
 }
+export namespace LikePostDTO {
+  export const zod = z.object({
+    postId: zodUUID,
+  });
+
+  export type Type = z.infer<typeof zod>;
+}

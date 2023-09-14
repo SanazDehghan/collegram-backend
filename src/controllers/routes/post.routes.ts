@@ -4,6 +4,7 @@ import {
   EditPostDTO,
   GetMyPostsDTO,
   GetPostDetailsDTO,
+  LikePostDTO,
   zodGetMyPostsDTO,
   zodGetPostDetailsDTO,
 } from "../dtos/post.dtos";
@@ -23,6 +24,7 @@ export class PostRoutes extends BaseRoutes {
     this.router.get("/", passObject.passUserDTO(zodGetMyPostsDTO, this.getMyPosts.bind(this)));
     this.router.get("/:postId", passObject.passUserDTO(zodGetPostDetailsDTO, this.getPostDetails.bind(this)));
     this.router.put("/:postId", passObject.passUserDTO(EditPostDTO.zod, this.editPost.bind(this)));
+    this.router.post("/like", passObject.passUserDTO(LikePostDTO.zod, this.likePost.bind(this)));
   }
 
   private editPost(uid: UUID, dto: EditPostDTO.Type): RequestHandler {
@@ -80,6 +82,20 @@ export class PostRoutes extends BaseRoutes {
         const basePost = { description: dto.description, closeFriendsOnly: dto.closeFriendsOnly };
         const post = await this.service.addPost(basePost, files, tags, userId);
         res.data = post;
+
+        next();
+      } catch (error) {
+        next(errorMapper(error));
+      }
+    };
+  }
+
+  private likePost(uid: UUID, dto: LikePostDTO.Type): RequestHandler {
+    return async (req, res, next) => {
+      try {
+        const result = await this.service.likePost(uid, dto.postId);
+
+        res.data = result;
 
         next();
       } catch (error) {

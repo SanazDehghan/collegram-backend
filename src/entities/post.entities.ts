@@ -40,6 +40,9 @@ export class PostsEntity {
   @JoinTable()
   tags!: TagsEntity[];
 
+  @Column({ default: 0 })
+  likes!: number;
+
   @OneToMany(() => CommentsEntity, (comment) => comment.post)
   comments!: CommentsEntity[];
 

@@ -10,6 +10,7 @@ export namespace PostDetailsDAO {
     userId: zodUUID,
     closeFriendsOnly: z.boolean(),
     description: zodDescription,
+    likes: z.number().int().gte(0),
     images: z.array(ImageDAO.zod),
     tags: z.array(TagDAO.zod),
     updatedAt: z.coerce.date(),

@@ -8,6 +8,7 @@ import { BaseTag } from "~/models/tag.models";
 import { TagsEntity } from "../entities/tag.entities";
 import { GetAllUserPostsDAO, PostDetailsDAO } from "./daos/post.daos";
 import { parseDAO } from "./tools/parse";
+import { PostLikesEntity } from "../entities/postLikes.entities";
 
 export interface IPostRepo {
   addPost: (
@@ -17,18 +18,21 @@ export interface IPostRepo {
     userId: UUID,
   ) => Promise<PostDetailsDAO.Type | null>;
   getAllUserPosts: (userId: UUID, limit: PaginationNumber, page: PaginationNumber) => Promise<GetAllUserPostsDAO.Type>;
-  getPostDetails: (userId: UUID, postId: UUID) => Promise<PostDetailsDAO.Type | null>;
   editPost: (
     userId: UUID,
     postId: UUID,
     tags: BaseTag.baseTagType[],
     basePost: BasePost.basePostType,
   ) => Promise<PostsEntity | null>;
+  getPostDetails: (postId: UUID) => Promise<PostDetailsDAO.Type | null>;
+  isLikedBy: (userId: UUID, postId: UUID) => Promise<boolean>;
+  likeAndUpdateCount: (userId: UUID, postId: UUID) => Promise<"ERROR_POST_NOT_FOUND" | "LIKED_BEFORE" | "OK">;
 }
 
 export class PostRepo implements IPostRepo {
   private repository = dataManager.source.getRepository(PostsEntity);
   private tagsRepo = dataManager.source.getRepository(TagsEntity);
+  private postLikesRepo = dataManager.source.getRepository(PostLikesEntity);
 
   private async getTagsToAdd(tags: BaseTag.baseTagType[]): Promise<(BaseTag.baseTagType | TagsEntity)[]> {
     const dbTags = await this.tagsRepo.findBy(tags);
@@ -93,13 +97,14 @@ export class PostRepo implements IPostRepo {
     return parseDAO(GetAllUserPostsDAO.zod, result);
   }
 
-  public async getPostDetails(userId: UUID, postId: UUID) {
+  public async getPostDetails(postId: UUID) {
     const result = await this.repository.findOne({
       select: {
         id: true,
         userId: true,
         description: true,
         closeFriendsOnly: true,
+        likes: true,
         updatedAt: true,
         images: {
           id: true,
@@ -111,7 +116,7 @@ export class PostRepo implements IPostRepo {
         },
       },
       relations: { images: true, tags: true },
-      where: { id: postId, userId },
+      where: { id: postId },
     });
 
     if (result === null) {
@@ -119,5 +124,33 @@ export class PostRepo implements IPostRepo {
     }
 
     return parseDAO(PostDetailsDAO.zod, result);
+  }
+
+  public async isLikedBy(userId: UUID, postId: UUID) {
+    const record = await this.postLikesRepo.findOne({
+      select: { id: true },
+      where: { userId, postId },
+    });
+
+    return record !== null;
+  }
+
+  public async likeAndUpdateCount(userId: UUID, postId: UUID) {
+    const post = await this.repository.findOneBy({ id: postId });
+
+    if (post === null) {
+      return "ERROR_POST_NOT_FOUND";
+    }
+
+    const isLikedBefore = await this.isLikedBy(userId, postId);
+    
+    if (isLikedBefore) {
+      return "LIKED_BEFORE";
+    }
+
+    await this.postLikesRepo.save({ userId, postId });
+    await this.repository.update(postId, { likes: post.likes + 1 });
+
+    return "OK";
   }
 }

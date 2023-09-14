@@ -1,6 +1,6 @@
 import { UUID } from "crypto";
-import { PaginationNumber, Pagination, createPagination } from "~/models/common";
-import { BasePost, MinimalPost } from "~/models/post.models";
+import { PaginationNumber, createPagination } from "~/models/common";
+import { BasePost } from "~/models/post.models";
 import { Tag } from "~/models/tag.models";
 import { IPostRepo } from "~/repository/post.repo";
 import { ForbiddenNumberOfPhotos, ForbiddenNumberOfTags, PostNotFound } from "./errors/service.errors";
@@ -47,15 +47,18 @@ export class PostServices {
   }
 
   public async getPostDetails(userId: UUID, postId: UUID) {
-    const post = await this.postRepo.getPostDetails(userId, postId);
+    const post = await this.postRepo.getPostDetails(postId);
 
     if (post === null) {
       throw new PostNotFound();
     }
 
-    return post;
-  }
+    const isLiked = await this.postRepo.isLikedBy(userId, postId)
 
+    const result = {...post, isLiked}
+
+    return result;
+  }
 
   public async editPost(userId: UUID, postId: UUID, tags: Tag.tagBrand[], basePost: BasePost.basePostType) {
     if (tags.length > 7) {
@@ -67,7 +70,15 @@ export class PostServices {
       throw new PostNotFound();
     }
     return post;
+  }
 
+  public async likePost(uid: UUID, postId: UUID) {
+    const result = await this.postRepo.likeAndUpdateCount(uid, postId);
 
+    if (result === "ERROR_POST_NOT_FOUND") {
+      throw new PostNotFound();
+    }
+
+    return result;
   }
 }

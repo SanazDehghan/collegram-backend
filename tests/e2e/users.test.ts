@@ -9,6 +9,7 @@ describe("testing /users", () => {
   beforeAll(async () => {
     const app = new App();
     await app.init();
+    await dataManager.cleanDB();
 
     express = app.getExpress();
   });
