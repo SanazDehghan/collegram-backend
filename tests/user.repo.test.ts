@@ -93,7 +93,10 @@ describe("Testing User Repo", () => {
   });
 
   test("edit user", async () => {
-    await expect(repo.editUser(userId, { username: "new_username" as Username })).resolves.toHaveProperty("username", "new_username");
+    await expect(repo.editUser(userId, { username: "new_username" as Username })).resolves.toHaveProperty(
+      "username",
+      "new_username",
+    );
 
     await expect(repo.getUserById(userId)).resolves.toHaveProperty("username", "new_username");
   });

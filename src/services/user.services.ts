@@ -131,7 +131,7 @@ export class UserServices {
       ...userInfo,
     };
   }
-  private  editUserWithPass(passwordHash: PasswordHash, userInfo: UserWithPassword) {
+  private editUserWithPass(passwordHash: PasswordHash, userInfo: UserWithPassword) {
     return {
       passwordHash,
       ...userInfo,
