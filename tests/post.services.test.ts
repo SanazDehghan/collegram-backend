@@ -34,7 +34,7 @@ describe("Testing Post Services", () => {
       { email: "email" as Email, username: "username" as Username, isPrivate: false },
       hash,
     );
-    userId = user!;
+    userId = user;
 
     const post = await postRepo.addPost(
       { description: "description" as Description, closeFriendsOnly: false },
@@ -75,6 +75,30 @@ describe("Testing Post Services", () => {
 
   test("like post: should fail due to wrong postId", async () => {
     await expect(postServices.likePost(userId, "85d4d57c-a98f-4600-9a2e-e51be3e066f0" as UUID)).rejects.toThrow(
+      PostNotFound,
+    );
+  });
+
+  test("bookmark post", async () => {
+    await expect(postServices.bookmarkPost(userId, postId, true)).resolves.toBe("OK")
+  });
+
+  test("bookmark post: should already be bookmarked", async () => {
+    await postServices.bookmarkPost(userId, postId, true)
+    await expect(postServices.bookmarkPost(userId, postId, true)).resolves.toBe("ALREADY_BOOKMARKED")
+  });
+
+  test("remove bookmark: has no bookmarks", async () => {
+    await expect(postServices.bookmarkPost(userId, postId, false)).resolves.toBe("NOT_BOOKMARKED")
+  });
+
+  test("remove bookmark", async () => {
+    await postServices.bookmarkPost(userId, postId, true)
+    await expect(postServices.bookmarkPost(userId, postId, false)).resolves.toBe("OK")
+  });
+
+  test("bookmark post: should fail due to wrong postId", async () => {
+    await expect(postServices.bookmarkPost(userId, "85d4d57c-a98f-4600-9a2e-e51be3e066f0" as UUID, true)).rejects.toThrow(
       PostNotFound,
     );
   });

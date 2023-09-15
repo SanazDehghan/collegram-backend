@@ -1,6 +1,7 @@
 import { PostServices } from "~/services/post.services";
 import {
   ADDPostDTO,
+  BookmarkPostDTO,
   EditPostDTO,
   GetMyPostsDTO,
   GetPostDetailsDTO,
@@ -25,6 +26,7 @@ export class PostRoutes extends BaseRoutes {
     this.router.get("/:postId", passObject.passUserDTO(zodGetPostDetailsDTO, this.getPostDetails.bind(this)));
     this.router.put("/:postId", passObject.passUserDTO(EditPostDTO.zod, this.editPost.bind(this)));
     this.router.post("/like", passObject.passUserDTO(LikePostDTO.zod, this.likePost.bind(this)));
+    this.router.put("/bookmark", passObject.passUserDTO(BookmarkPostDTO.zod, this.bookmarkPost.bind(this)));
   }
 
   private editPost(uid: UUID, dto: EditPostDTO.Type): RequestHandler {
@@ -94,6 +96,21 @@ export class PostRoutes extends BaseRoutes {
     return async (req, res, next) => {
       try {
         const result = await this.service.likePost(uid, dto.postId);
+
+        res.data = result;
+
+        next();
+      } catch (error) {
+        next(errorMapper(error));
+      }
+    };
+  }
+
+  private bookmarkPost(uid: UUID, dto: BookmarkPostDTO.Type): RequestHandler {
+    return async (req, res, next) => {
+      try {
+        const { postId, bookmark } = dto;
+        const result = await this.service.bookmarkPost(uid, postId, bookmark);
 
         res.data = result;
 

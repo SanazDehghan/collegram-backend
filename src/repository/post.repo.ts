@@ -9,6 +9,8 @@ import { TagsEntity } from "../entities/tag.entities";
 import { GetAllUserPostsDAO, PostDetailsDAO } from "./daos/post.daos";
 import { parseDAO } from "./tools/parse";
 import { PostLikesEntity } from "../entities/postLikes.entities";
+import { PostBookmarksEntity } from "../entities/postBookmarks.entities";
+import { IsNull } from "typeorm";
 
 export interface IPostRepo {
   addPost: (
@@ -27,12 +29,18 @@ export interface IPostRepo {
   getPostDetails: (postId: UUID) => Promise<PostDetailsDAO.Type | null>;
   isLikedBy: (userId: UUID, postId: UUID) => Promise<boolean>;
   likeAndUpdateCount: (userId: UUID, postId: UUID) => Promise<"ERROR_POST_NOT_FOUND" | "LIKED_BEFORE" | "OK">;
+  bookmarkAndUpdateCount: (userId: UUID, postId: UUID) => Promise<"ERROR_POST_NOT_FOUND" | "ALREADY_BOOKMARKED" | "OK">;
+  removeBookmarkAndUpdateCount: (
+    userId: UUID,
+    postId: UUID,
+  ) => Promise<"ERROR_POST_NOT_FOUND" | "NOT_BOOKMARKED" | "OK">;
 }
 
 export class PostRepo implements IPostRepo {
   private repository = dataManager.source.getRepository(PostsEntity);
   private tagsRepo = dataManager.source.getRepository(TagsEntity);
   private postLikesRepo = dataManager.source.getRepository(PostLikesEntity);
+  private postBookmarksRepo = dataManager.source.getRepository(PostBookmarksEntity);
 
   private async getTagsToAdd(tags: BaseTag.baseTagType[]): Promise<(BaseTag.baseTagType | TagsEntity)[]> {
     const dbTags = await this.tagsRepo.findBy(tags);
@@ -105,6 +113,7 @@ export class PostRepo implements IPostRepo {
         description: true,
         closeFriendsOnly: true,
         likes: true,
+        bookmarks: true,
         updatedAt: true,
         images: {
           id: true,
@@ -129,7 +138,7 @@ export class PostRepo implements IPostRepo {
   public async isLikedBy(userId: UUID, postId: UUID) {
     const record = await this.postLikesRepo.findOne({
       select: { id: true },
-      where: { userId, postId },
+      where: { userId, postId, unLikedAt: IsNull() },
     });
 
     return record !== null;
@@ -143,13 +152,60 @@ export class PostRepo implements IPostRepo {
     }
 
     const isLikedBefore = await this.isLikedBy(userId, postId);
-    
+
     if (isLikedBefore) {
       return "LIKED_BEFORE";
     }
 
     await this.postLikesRepo.save({ userId, postId });
     await this.repository.update(postId, { likes: post.likes + 1 });
+
+    return "OK";
+  }
+
+  private async getBookmark(userId: UUID, postId: UUID) {
+    const record = await this.postBookmarksRepo.findOne({
+      select: { id: true },
+      where: { userId, postId, deletedAt: IsNull() },
+    });
+
+    return record;
+  }
+
+  public async bookmarkAndUpdateCount(userId: UUID, postId: UUID) {
+    const post = await this.repository.findOneBy({ id: postId });
+
+    if (post === null) {
+      return "ERROR_POST_NOT_FOUND";
+    }
+
+    const bookmarkRecord = await this.getBookmark(userId, postId);
+
+    if (bookmarkRecord !== null) {
+      return "ALREADY_BOOKMARKED";
+    }
+
+    await this.postBookmarksRepo.save({ userId, postId });
+    await this.repository.update(postId, { bookmarks: post.bookmarks + 1 });
+
+    return "OK";
+  }
+
+  public async removeBookmarkAndUpdateCount(userId: UUID, postId: UUID) {
+    const post = await this.repository.findOneBy({ id: postId });
+
+    if (post === null) {
+      return "ERROR_POST_NOT_FOUND";
+    }
+
+    const bookmarkRecord = await this.getBookmark(userId, postId);
+
+    if (bookmarkRecord === null) {
+      return "NOT_BOOKMARKED";
+    }
+
+    await this.postBookmarksRepo.update(bookmarkRecord.id, { deletedAt: new Date() });
+    await this.repository.update(postId, { bookmarks: post.bookmarks - 1 });
 
     return "OK";
   }

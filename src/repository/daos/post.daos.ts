@@ -5,12 +5,15 @@ import { ImageDAO } from "./image.daos";
 import { TagDAO } from "./tag.daos";
 
 export namespace PostDetailsDAO {
+  const zodCount = z.number().int().gte(0);
+
   export const zod = z.object({
     id: zodUUID,
     userId: zodUUID,
     closeFriendsOnly: z.boolean(),
     description: zodDescription,
-    likes: z.number().int().gte(0),
+    likes: zodCount,
+    bookmarks: zodCount,
     images: z.array(ImageDAO.zod),
     tags: z.array(TagDAO.zod),
     updatedAt: z.coerce.date(),

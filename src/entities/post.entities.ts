@@ -43,6 +43,9 @@ export class PostsEntity {
   @Column({ default: 0 })
   likes!: number;
 
+  @Column({ default: 0 })
+  bookmarks!: number;
+
   @OneToMany(() => CommentsEntity, (comment) => comment.post)
   comments!: CommentsEntity[];
 

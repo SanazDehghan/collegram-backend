@@ -30,8 +30,8 @@ export namespace EditPostDTO {
   export const zod = z.object({
     description: zodDescription,
     closeFriendsOnly: z.boolean(),
-    tags:z.array(Tag.zod),
-    postId: zodUUID
+    tags: z.array(Tag.zod),
+    postId: zodUUID,
   });
 
   export type Type = z.infer<typeof zod>;
@@ -39,6 +39,15 @@ export namespace EditPostDTO {
 export namespace LikePostDTO {
   export const zod = z.object({
     postId: zodUUID,
+  });
+
+  export type Type = z.infer<typeof zod>;
+}
+
+export namespace BookmarkPostDTO {
+  export const zod = z.object({
+    postId: zodUUID,
+    bookmark: z.boolean(),
   });
 
   export type Type = z.infer<typeof zod>;

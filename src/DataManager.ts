@@ -8,6 +8,7 @@ import { ImagesEntity } from "./entities/image.entities";
 import { CommentsEntity } from "./entities/comment.entities";
 import { UserRelationsEntity } from "./entities/userRelations.entities";
 import { PostLikesEntity } from "./entities/postLikes.entities";
+import { PostBookmarksEntity } from "./entities/postBookmarks.entities";
 
 class DataManager {
   private dataSource: DataSource;
@@ -38,6 +39,7 @@ class DataManager {
       CommentsEntity,
       UserRelationsEntity,
       PostLikesEntity,
+      PostBookmarksEntity,
     ];
   }
 
