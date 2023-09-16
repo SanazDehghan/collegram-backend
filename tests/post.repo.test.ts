@@ -7,10 +7,13 @@ import { Tag } from "~/models/tag.models";
 import { Email, Username } from "~/models/user.models";
 import { PostRepo } from "~/repository/post.repo";
 import { UserRepo } from "~/repository/user.repo";
+import { UserRelationsServices } from "../src/services/userRelations.services";
+import { UserRelationsRepo } from "../src/repository/userRelations.repo";
 
 describe("Testing Post Repo", () => {
   let userRepo: UserRepo;
   let postRepo: PostRepo;
+  let userRelationsServices: UserRelationsServices;
 
   let hash: PasswordHash;
   let userId: UUID;
@@ -22,6 +25,7 @@ describe("Testing Post Repo", () => {
 
     userRepo = new UserRepo();
     postRepo = new PostRepo();
+    userRelationsServices = new UserRelationsServices(new UserRelationsRepo());
 
     hash = await generatePasswordHash("password" as Password);
   });
@@ -128,5 +132,11 @@ describe("Testing Post Repo", () => {
 
     const result = await postRepo.getUserBookmarks(userId, 1 as PaginationNumber, 1 as PaginationNumber);
     expect(result[0][0]).toHaveProperty("id", postId);
+  });
+
+  test("get posts by userIds", async () => {
+    const [result, total] = await postRepo.getPostsByUserIds([userId], 1 as PaginationNumber, 1 as PaginationNumber)
+
+    expect(result[0]?.id).toBe(postId);
   });
 });

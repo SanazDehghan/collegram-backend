@@ -10,7 +10,7 @@ describe("Testing User Relations Repo", () => {
   let userRepo: IUserRepo;
 
   let followerId: UUID;
-  let receiverId: UUID;
+  let followingId: UUID;
 
   beforeAll(async () => {
     await dataManager.init();
@@ -28,7 +28,7 @@ describe("Testing User Relations Repo", () => {
     );
 
     const receiverPasswordHash = await generatePasswordHash("receiverPass" as Password);
-    receiverId = await userRepo.addUserWithPassword(
+    followingId = await userRepo.addUserWithPassword(
       { email: "receiver@email.com" as Email, username: "receiver" as Username, isPrivate: false },
       receiverPasswordHash,
     );
@@ -43,14 +43,14 @@ describe("Testing User Relations Repo", () => {
   });
 
   test("get relations by follower userId and receiver userId", async () => {
-    await expect(userRelationsRepo.getRelations(followerId, receiverId)).resolves.not.toBeNull();
-  });
-
-  test("find user by userId", async () => {
-    await expect(userRelationsRepo.findUser(receiverId)).resolves.not.toBeNull();
+    await expect(userRelationsRepo.getRelations(followerId, followingId)).resolves.not.toBeNull();
   });
 
   test("add relations by follower userId and receiver userId and relation type", async () => {
-    await expect(userRelationsRepo.addRelations(followerId, receiverId, "FOLLOW")).resolves.not.toBeNull();
+    await expect(userRelationsRepo.addRelations(followerId, followingId, "FOLLOW")).resolves.not.toBeNull();
+  });
+
+  test("get following relations by userId", async () => {
+    await expect(userRelationsRepo.getRelatedUserIds(followerId, "FOLLOW")).resolves.not.toBeNull();
   });
 });

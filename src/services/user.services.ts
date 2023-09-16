@@ -17,7 +17,7 @@ import { UUID } from "crypto";
 import { baseUrl, mailConfig } from "~/template/config";
 import { Token } from "~/models/token.models";
 import { UploadImageDTO } from "~/controllers/dtos/image.dtos";
-import { UserRelationsServices } from "./userRelations.services";
+import { FollowingUser, UserRelationsServices } from "./userRelations.services";
 
 export class UserServices {
   constructor(
@@ -151,12 +151,20 @@ export class UserServices {
     return userStatus;
   }
 
-  public async follow(uid: UUID, userId: UUID) {
-    const followResult = await this.relationsServices.follow(uid, userId);
-    if (followResult === "FOLLOWED") {
-      await this.userRepo.updateFollow(uid, userId);
-      return "FOLLOWED";
+  public async follow(followerId: UUID, followingId: UUID) {
+    const followingUser = await this.getUserInfo(followingId);
+    
+    const followResult = await this.relationsServices.follow(followerId, followingUser);
+
+    if (followResult === null) return "ALREADY_REQUESTED";
+    if (followResult === "REQUESTED") return "REQUESTED";
+
+    const result = await this.userRepo.increaseFollowCount(followerId, followingId);
+
+    if (result === "ERROR_USER_NOT_FOUND") {
+      throw new UserNotFound();
     }
-    return followResult;
+
+    return "FOLLOWED";
   }
 }

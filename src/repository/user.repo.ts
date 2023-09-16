@@ -14,7 +14,7 @@ export interface IUserRepo {
   editUser: (userId: UUID, editedUser: Partial<UserWithPasswordHash>) => Promise<Partial<UserWithPasswordHash> | null>;
   getUserWithPasswordHash: (identifier: Email | Username) => Promise<UserWithPasswordHash | null>;
   getEmailByIdentifier: (identifier: Email | Username) => Promise<Email | null>;
-  updateFollow : (uid: UUID, userId: UUID) => Promise<boolean>;
+  increaseFollowCount : (followerId: UUID, followingId: UUID) => Promise<"UPDATED" | "ERROR_USER_NOT_FOUND">;
 }
 
 export class UserRepo implements IUserRepo {
@@ -123,16 +123,16 @@ export class UserRepo implements IUserRepo {
     return email;
   }
 
-  public async updateFollow(uid: UUID, userId: UUID) {
-    const follower = await this.repository.findOneBy({ id: uid });
-    const following = await this.repository.findOneBy({ id: userId });
+  public async increaseFollowCount(followerId: UUID, followingId: UUID) {
+    const follower = await this.repository.findOneBy({ id: followerId });
+    const following = await this.repository.findOneBy({ id: followingId });
     if (follower === null || following === null) {
-      return false;
+      return  "ERROR_USER_NOT_FOUND";
     }
 
-    const updateFollower = await this.repository.update(uid, { followings: follower.followings + 1 });
-    const updateFollowing = await this.repository.update(userId, { followers: following.followers + 1 });
+    const updateFollower = await this.repository.update(followerId, { followings: follower.followings + 1 });
+    const updateFollowing = await this.repository.update(followingId, { followers: following.followers + 1 });
 
-    return true;
+    return "UPDATED";
   }
 }

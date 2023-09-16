@@ -61,3 +61,11 @@ export namespace GetMyBookmarksDTO {
 
   export type Type = z.infer<typeof zod>;
 }
+export namespace FollowingsPostsDTO {
+  export const zod = z.object({
+    limit: zodPaginationNumber.default(20),
+    page: zodPaginationNumber.default(1),
+  });
+
+  export type Type = z.infer<typeof zod>;
+}

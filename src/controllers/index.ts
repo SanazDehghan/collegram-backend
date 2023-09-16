@@ -10,15 +10,17 @@ import { PostRepo } from "~/repository/post.repo";
 import { UserRelationsServices } from "~/services/userRelations.services";
 import { UserRelationsRepo } from "~/repository/userRelations.repo";
 
+const userRelationsServices = new UserRelationsServices(new UserRelationsRepo());
+
 export const routes = [
   new UserRoutes(
     new UserServices(
       new UserRepo(),
       new PasswordRepo(),
       new TokenServices(),
-      new UserRelationsServices(new UserRelationsRepo()),
+      userRelationsServices,
       new MailServices(),
     ),
   ),
-  new PostRoutes(new PostServices(new PostRepo())),
+  new PostRoutes(new PostServices(new PostRepo(), userRelationsServices)),
 ];

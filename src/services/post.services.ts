@@ -5,13 +5,22 @@ import { Tag } from "~/models/tag.models";
 import { IPostRepo } from "~/repository/post.repo";
 import { ForbiddenNumberOfPhotos, ForbiddenNumberOfTags, PostNotFound } from "./errors/service.errors";
 import { UploadedImage } from "~/models/image.models";
+import { UserRelationsServices } from "./userRelations.services";
 
 export class PostServices {
-  constructor(private postRepo: IPostRepo) {}
+  constructor(
+    private postRepo: IPostRepo,
+    private userRelationsServices: UserRelationsServices,
+  ) {}
 
   private createBaseTags(tags: Tag.tagBrand[]) {
     const baseTags = tags.map((tag) => ({ value: tag }));
     return baseTags;
+  }
+
+  private createBaseImage(images: UploadedImage.Type[], userId: UUID) {
+    const baseImage = images.map((image) => ({ userId, ...image }));
+    return baseImage;
   }
 
   public async addPost(post: BasePost.basePostType, images: UploadedImage.Type[], tags: Tag.tagBrand[], userId: UUID) {
@@ -106,5 +115,12 @@ export class PostServices {
     const singleImagePosts = this.makeSingleImagePosts(posts);
 
     return createPagination(singleImagePosts, page, limit, total);
+  }
+  
+  public async getAllFollowingsPosts(uid: UUID, limit: PaginationNumber, page: PaginationNumber) {
+    const followingsUserIds = await this.userRelationsServices.getUserFollowingIds(uid);
+    const [followingsPosts, total] = await this.postRepo.getPostsByUserIds(followingsUserIds, limit, page);
+
+    return createPagination(followingsPosts, page, limit, total);
   }
 }

@@ -6,7 +6,7 @@ import { UploadedImage } from "~/models/image.models";
 import { BasePost } from "~/models/post.models";
 import { BaseTag } from "~/models/tag.models";
 import { TagsEntity } from "../entities/tag.entities";
-import { GetAllUserPostsDAO, GetUserBookmarksDAO, PostDetailsDAO } from "./daos/post.daos";
+import { GetAllUserPostsDAO, GetPostsByUserIdsDAO, GetUserBookmarksDAO, PostDetailsDAO } from "./daos/post.daos";
 import { parseDAO } from "./tools/parse";
 import { PostLikesEntity } from "../entities/postLikes.entities";
 import { PostBookmarksEntity } from "../entities/postBookmarks.entities";
@@ -40,6 +40,11 @@ export interface IPostRepo {
     limit: PaginationNumber,
     page: PaginationNumber,
   ) => Promise<GetUserBookmarksDAO.Type>;
+  getPostsByUserIds: (
+    userIds: UUID[],
+    limit: PaginationNumber,
+    page: PaginationNumber,
+  ) => Promise<GetPostsByUserIdsDAO.Type>;
 }
 
 export class PostRepo implements IPostRepo {
@@ -242,5 +247,38 @@ export class PostRepo implements IPostRepo {
     });
 
     return parseDAO(GetUserBookmarksDAO.zod, result);
+  }
+
+  public async getPostsByUserIds(userIds: UUID[], limit: PaginationNumber, page: PaginationNumber) {
+    const skip = (page - 1) * limit;
+
+    const results = await this.repository.findAndCount({
+      select: {
+        id: true,
+        likes: true,
+        bookmarks: true,
+        commentsNum: true,
+        closeFriendsOnly: true,
+        images: {
+          id: true,
+          path: true,
+        },
+        tags: {
+          value: true,
+        },
+        user: {
+          id: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+      relations: { images: true, tags: true, user: true },
+      where: { userId: In(userIds) },
+      take: limit,
+      skip,
+    });
+
+    return parseDAO(GetPostsByUserIdsDAO.zod, results);
   }
 }

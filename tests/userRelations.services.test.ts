@@ -14,7 +14,7 @@ describe("Testing User Relations Services", () => {
   let userRelationsServices: UserRelationsServices;
 
   let followerId: UUID;
-  let receiverId: UUID;
+  let followingId: UUID;
 
   beforeAll(async () => {
     await dataManager.init();
@@ -33,7 +33,7 @@ describe("Testing User Relations Services", () => {
     );
 
     const receiverPasswordHash = await generatePasswordHash("receiverPass" as Password);
-    receiverId = await userRepo.addUserWithPassword(
+    followingId = await userRepo.addUserWithPassword(
       { email: "receiver@email.com" as Email, username: "receiver" as Username, isPrivate: false },
       receiverPasswordHash,
     );
@@ -48,23 +48,19 @@ describe("Testing User Relations Services", () => {
   });
 
   test("should follow the user", async () => {
-    const result = await userRelationsServices.follow(followerId, receiverId);
+    const result = await userRelationsServices.follow(followerId, { id: followingId, isPrivate: false });
     expect(result).toBe("FOLLOWED");
   });
 
   test("should request to follow the user when the user page is private", async () => {
-    const user = userRepo.editUser(receiverId, { isPrivate: true });
-    const result = await userRelationsServices.follow(followerId, receiverId);
+    const result = await userRelationsServices.follow(followerId, { id: followingId, isPrivate: true });
     expect(result).toBe("REQUESTED");
   });
 
-  test("should throw UserNotFound error when the receiver user is not found", async () => {
-    await expect(userRelationsServices.follow(followerId, v4() as UUID)).rejects.toThrow(UserNotFound);
-  });
-
   test("should throw ForbiddenFollowUser error when the user is already following the target user", async () => {
-    const result = await userRelationsServices.follow(followerId, receiverId);
-    await expect(userRelationsServices.follow(followerId, receiverId)).rejects.toThrow(ForbiddenFollowUser);
+    const result = await userRelationsServices.follow(followerId, { id: followingId, isPrivate: false });
+    await expect(userRelationsServices.follow(followerId, { id: followingId, isPrivate: false })).rejects.toThrow(
+      ForbiddenFollowUser,
+    );
   });
-
 });

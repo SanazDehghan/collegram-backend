@@ -4,6 +4,7 @@ import {
   BookmarkPostDTO,
   EditPostDTO,
   GetMyBookmarksDTO,
+  FollowingsPostsDTO,
   GetMyPostsDTO,
   GetPostDetailsDTO,
   LikePostDTO,
@@ -23,6 +24,7 @@ export class PostRoutes extends BaseRoutes {
     this.router.post("/like", passObject.passUserDTO(LikePostDTO.zod, this.likePost.bind(this)));
     this.router.get("/bookmark", passObject.passUserDTO(GetMyBookmarksDTO.zod, this.getMyBookmarks.bind(this)));
     this.router.put("/bookmark", passObject.passUserDTO(BookmarkPostDTO.zod, this.bookmarkPost.bind(this)));
+    this.router.get("/followings", passObject.passUserDTO(FollowingsPostsDTO.zod, this.getFollowingsPosts.bind(this)));
     this.router.get("/:postId", passObject.passUserDTO(zodGetPostDetailsDTO, this.getPostDetails.bind(this)));
     this.router.put("/:postId", passObject.passUserDTO(EditPostDTO.zod, this.editPost.bind(this)));
   }
@@ -31,7 +33,7 @@ export class PostRoutes extends BaseRoutes {
     return async (req, res) => {
       try {
         console.log(dto);
-        
+
         const postId = dto.postId;
         const tags = dto.tags;
         const basePost = { description: dto.description, closeFriendsOnly: dto.closeFriendsOnly };
@@ -106,7 +108,7 @@ export class PostRoutes extends BaseRoutes {
         this.sendError(res, error);
       }
     };
-  }
+  };
 
   private getMyBookmarks: Handler.UserDTO<GetMyBookmarksDTO.Type> = (uid, dto) => {
     return async (req, res, next) => {
@@ -114,10 +116,23 @@ export class PostRoutes extends BaseRoutes {
         const { limit, page } = dto;
         const result = await this.service.getMyBookmarks(uid, limit, page);
 
-        this.sendData(res, result)
+        this.sendData(res, result);
       } catch (error) {
-        this.sendError(res, error)
+        this.sendError(res, error);
       }
     };
-  }
+  };
+
+  private getFollowingsPosts: Handler.UserDTO<FollowingsPostsDTO.Type> = (uid, dto) => {
+    return async (req, res) => {
+      try {
+        const { limit, page } = dto;
+        const result = await this.service.getAllFollowingsPosts(uid, limit, page);
+
+        this.sendData(res, result);
+      } catch (error) {
+        this.sendError(res, error);
+      }
+    };
+  };
 }
