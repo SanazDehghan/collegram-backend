@@ -8,6 +8,7 @@ import { PostRepo } from "../src/repository/post.repo";
 import { UserRepo } from "../src/repository/user.repo";
 import { PostServices } from "../src/services/post.services";
 import { ForbiddenNumberOfTags, PostNotFound } from "../src/services/errors/service.errors";
+import { PaginationNumber } from "../src/models/common";
 
 describe("Testing Post Services", () => {
   let userRepo: UserRepo;
@@ -55,13 +56,13 @@ describe("Testing Post Services", () => {
 
   test("should throw an error if tags length is more than 7", async () => {
     const tags = ["tig", "git", "github", "tags", "gat", "gallary", "yrallag", "yellows"] as Tag.tagBrand[];
-    const userId = "565e379f-85b5-412a-b8a3-19aea38c6824"
-    const postId = "c0b123b7-d51b-4ffa-97d8-a343795c6ad6"
+    const userId = "565e379f-85b5-412a-b8a3-19aea38c6824";
+    const postId = "c0b123b7-d51b-4ffa-97d8-a343795c6ad6";
     const basePost = {
-        description: "Description",
-        closeFriendsOnly: true,
-    } as BasePost.basePostType
-    await expect(postServices.editPost(userId, postId, tags, basePost)).rejects.toThrow(ForbiddenNumberOfTags)
+      description: "Description",
+      closeFriendsOnly: true,
+    } as BasePost.basePostType;
+    await expect(postServices.editPost(userId, postId, tags, basePost)).rejects.toThrow(ForbiddenNumberOfTags);
   });
 
   test("like post", async () => {
@@ -80,26 +81,33 @@ describe("Testing Post Services", () => {
   });
 
   test("bookmark post", async () => {
-    await expect(postServices.bookmarkPost(userId, postId, true)).resolves.toBe("OK")
+    await expect(postServices.bookmarkPost(userId, postId, true)).resolves.toBe("OK");
   });
 
   test("bookmark post: should already be bookmarked", async () => {
-    await postServices.bookmarkPost(userId, postId, true)
-    await expect(postServices.bookmarkPost(userId, postId, true)).resolves.toBe("ALREADY_BOOKMARKED")
+    await postServices.bookmarkPost(userId, postId, true);
+    await expect(postServices.bookmarkPost(userId, postId, true)).resolves.toBe("ALREADY_BOOKMARKED");
   });
 
   test("remove bookmark: has no bookmarks", async () => {
-    await expect(postServices.bookmarkPost(userId, postId, false)).resolves.toBe("NOT_BOOKMARKED")
+    await expect(postServices.bookmarkPost(userId, postId, false)).resolves.toBe("NOT_BOOKMARKED");
   });
 
   test("remove bookmark", async () => {
-    await postServices.bookmarkPost(userId, postId, true)
-    await expect(postServices.bookmarkPost(userId, postId, false)).resolves.toBe("OK")
+    await postServices.bookmarkPost(userId, postId, true);
+    await expect(postServices.bookmarkPost(userId, postId, false)).resolves.toBe("OK");
   });
 
   test("bookmark post: should fail due to wrong postId", async () => {
-    await expect(postServices.bookmarkPost(userId, "85d4d57c-a98f-4600-9a2e-e51be3e066f0" as UUID, true)).rejects.toThrow(
-      PostNotFound,
-    );
+    await expect(
+      postServices.bookmarkPost(userId, "85d4d57c-a98f-4600-9a2e-e51be3e066f0" as UUID, true),
+    ).rejects.toThrow(PostNotFound);
+  });
+
+  test("get my bookmarks", async () => {
+    await postServices.bookmarkPost(userId, postId, true);
+
+    const result = await postServices.getMyBookmarks(userId, 1 as PaginationNumber, 1 as PaginationNumber);
+    expect(result.items[0]).toHaveProperty("id", postId);
   });
 });

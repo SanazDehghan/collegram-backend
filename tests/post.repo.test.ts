@@ -108,7 +108,7 @@ describe("Testing Post Repo", () => {
 
   test("remove bookmark and update count", async () => {
     await postRepo.bookmarkAndUpdateCount(userId, postId);
-    
+
     await expect(postRepo.removeBookmarkAndUpdateCount(userId, postId)).resolves.toBe("OK");
     await expect(postRepo.getPostDetails(postId)).resolves.toHaveProperty("bookmarks", 0);
   });
@@ -118,8 +118,15 @@ describe("Testing Post Repo", () => {
   });
 
   test("bookmark and update count: should fail due to wrong post id", async () => {
-    await expect(postRepo.removeBookmarkAndUpdateCount(userId, "85d4d57c-a98f-4600-9a2e-e51be3e066f0" as UUID)).resolves.toBe(
-      "ERROR_POST_NOT_FOUND",
-    );
+    await expect(
+      postRepo.removeBookmarkAndUpdateCount(userId, "85d4d57c-a98f-4600-9a2e-e51be3e066f0" as UUID),
+    ).resolves.toBe("ERROR_POST_NOT_FOUND");
+  });
+
+  test("get user bookmarks", async () => {
+    await postRepo.bookmarkAndUpdateCount(userId, postId);
+
+    const result = await postRepo.getUserBookmarks(userId, 1 as PaginationNumber, 1 as PaginationNumber);
+    expect(result[0][0]).toHaveProperty("id", postId);
   });
 });

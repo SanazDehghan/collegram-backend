@@ -6,11 +6,12 @@ import { UploadedImage } from "~/models/image.models";
 import { BasePost } from "~/models/post.models";
 import { BaseTag } from "~/models/tag.models";
 import { TagsEntity } from "../entities/tag.entities";
-import { GetAllUserPostsDAO, PostDetailsDAO } from "./daos/post.daos";
+import { GetAllUserPostsDAO, GetUserBookmarksDAO, PostDetailsDAO } from "./daos/post.daos";
 import { parseDAO } from "./tools/parse";
 import { PostLikesEntity } from "../entities/postLikes.entities";
 import { PostBookmarksEntity } from "../entities/postBookmarks.entities";
-import { IsNull } from "typeorm";
+import { In, IsNull } from "typeorm";
+import { paginate } from "./tools/paginate";
 
 export interface IPostRepo {
   addPost: (
@@ -34,6 +35,11 @@ export interface IPostRepo {
     userId: UUID,
     postId: UUID,
   ) => Promise<"ERROR_POST_NOT_FOUND" | "NOT_BOOKMARKED" | "OK">;
+  getUserBookmarks: (
+    userId: UUID,
+    limit: PaginationNumber,
+    page: PaginationNumber,
+  ) => Promise<GetUserBookmarksDAO.Type>;
 }
 
 export class PostRepo implements IPostRepo {
@@ -208,5 +214,33 @@ export class PostRepo implements IPostRepo {
     await this.repository.update(postId, { bookmarks: post.bookmarks - 1 });
 
     return "OK";
+  }
+
+  private async getUserBookmarkedPosts(userId: UUID) {
+    const records = await this.postBookmarksRepo.find({
+      select: { postId: true },
+      where: { userId },
+    });
+
+    const postIds = records.map((record) => record.postId);
+
+    return postIds;
+  }
+
+  public async getUserBookmarks(userId: UUID, limit: PaginationNumber, page: PaginationNumber) {
+    const postIds = await this.getUserBookmarkedPosts(userId);
+
+    const result = await this.repository.findAndCount({
+      select: {
+        id: true,
+        userId: true,
+        images: true,
+      },
+      where: { id: In(postIds) },
+      relations: { images: true },
+      ...paginate(limit, page),
+    });
+
+    return parseDAO(GetUserBookmarksDAO.zod, result);
   }
 }

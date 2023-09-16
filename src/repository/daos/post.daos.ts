@@ -33,3 +33,15 @@ export namespace GetAllUserPostsDAO {
 
   export type Type = z.infer<typeof zod>;
 }
+
+export namespace GetUserBookmarksDAO {
+  const minimalPost = z.object({
+    id: zodUUID,
+    userId: zodUUID,
+    images: z.array(ImageDAO.zod),
+  });
+
+  export const zod = z.tuple([z.array(minimalPost), z.number().int().gte(0)]);
+
+  export type Type = z.infer<typeof zod>;
+}

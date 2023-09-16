@@ -1,6 +1,6 @@
 import { UUID } from "crypto";
 import { PaginationNumber, createPagination } from "~/models/common";
-import { BasePost } from "~/models/post.models";
+import { BasePost, MinimalPost, MinimalPostMultipleImages } from "~/models/post.models";
 import { Tag } from "~/models/tag.models";
 import { IPostRepo } from "~/repository/post.repo";
 import { ForbiddenNumberOfPhotos, ForbiddenNumberOfTags, PostNotFound } from "./errors/service.errors";
@@ -30,18 +30,24 @@ export class PostServices {
     return addedPost;
   }
 
-  public async getAllUserPosts(uid: UUID, limit: PaginationNumber, page: PaginationNumber) {
-    const [posts, total] = await this.postRepo.getAllUserPosts(uid, limit, page);
-
+  private makeSingleImagePosts(posts: MinimalPostMultipleImages[]): MinimalPost[] {
     const singleImagePosts = posts.map((post) => {
       const { images, ...rest } = post;
 
       if (images[0] === undefined) {
-        return post;
+        return rest;
       }
 
       return { ...rest, image: images[0] };
     });
+
+    return singleImagePosts;
+  }
+
+  public async getAllUserPosts(uid: UUID, limit: PaginationNumber, page: PaginationNumber) {
+    const [posts, total] = await this.postRepo.getAllUserPosts(uid, limit, page);
+
+    const singleImagePosts = this.makeSingleImagePosts(posts);
 
     return createPagination(singleImagePosts, page, limit, total);
   }
@@ -92,5 +98,13 @@ export class PostServices {
     }
 
     return result;
+  }
+
+  public async getMyBookmarks(userId: UUID, limit: PaginationNumber, page: PaginationNumber) {
+    const [posts, total] = await this.postRepo.getUserBookmarks(userId, limit, page);
+
+    const singleImagePosts = this.makeSingleImagePosts(posts);
+
+    return createPagination(singleImagePosts, page, limit, total);
   }
 }
