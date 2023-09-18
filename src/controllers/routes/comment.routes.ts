@@ -1,47 +1,39 @@
-import { errorMapper } from "../tools/errorMapper.tools";
-import { BaseRoutes, RouteHandler } from "./base.routes";
-import { RequestHandler } from "express";
+import { BaseRoutes, Handler } from "./base.routes";
 import { passObject } from "../middleware/passObject";
 import { AddCommentDTO, GetCommentDTO } from "../dtos/comment.dtos";
 import { CommentServices } from "~/services/comment.services";
-import { UUID } from "crypto";
-
 
 export class CommentRoutes extends BaseRoutes {
   constructor(private service: CommentServices) {
     super("/comments");
 
     this.router.post("/", passObject.passUserDTO(AddCommentDTO.zod, this.addComment.bind(this)));
-    this.router.get("/", passObject.passUserDTO(GetCommentDTO.zod, this.getComment.bind(this)));
+    this.router.get("/", passObject.passDTO(GetCommentDTO.zod, this.getComment.bind(this)));
   }
 
-  public addComment(uid: UUID, dto: AddCommentDTO.AddCommentType): RequestHandler {
-    return async (req, res, next) => {
+  public addComment: Handler.UserDTO<AddCommentDTO.AddCommentType> = (uid, dto) => {
+    return async (req, res) => {
       try {
         const { postId, text, parentId } = dto;
         const result = await this.service.addComment(uid, postId, text, parentId);
 
-        res.data = {result};
-
-        next();
+        this.sendData(res, result);
       } catch (error) {
-        next(errorMapper(error));
+        this.sendError(res, error);
       }
     };
-  }
+  };
 
-  public getComment(uid: UUID, dto: GetCommentDTO.GetCommentType): RequestHandler {
-    return async (req, res, next) => {
+  public getComment: Handler.DTO<GetCommentDTO.GetCommentType> = (dto) => {
+    return async (req, res) => {
       try {
         const { postId, limit, page } = dto;
         const result = await this.service.getComment(postId, limit, page);
 
-        res.data = {result};
-
-        next();
+        this.sendData(res, result);
       } catch (error) {
-        next(errorMapper(error));
+        this.sendData(res, error);
       }
     };
-  }
+  };
 }

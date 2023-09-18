@@ -10,7 +10,6 @@ import {
   zodGetMyPostsDTO,
   zodGetPostDetailsDTO,
 } from "../dtos/post.dtos";
-import { errorMapper } from "../tools/errorMapper.tools";
 import { BaseRoutes, Handler } from "./base.routes";
 import { passObject } from "../middleware/passObject";
 import { upload } from "../middleware/upload";
@@ -22,6 +21,7 @@ export class PostRoutes extends BaseRoutes {
     this.router.post("/", upload.files("photos", 5), upload.passData(ADDPostDTO.zod, this.addPost.bind(this)));
     this.router.get("/", passObject.passUserDTO(zodGetMyPostsDTO, this.getMyPosts.bind(this)));
     this.router.post("/like", passObject.passUserDTO(LikePostDTO.zod, this.likePost.bind(this)));
+    this.router.get("/bookmark", passObject.passUserDTO(GetMyBookmarksDTO.zod, this.getMyBookmarks.bind(this)));
     this.router.put("/bookmark", passObject.passUserDTO(BookmarkPostDTO.zod, this.bookmarkPost.bind(this)));
     this.router.get("/:postId", passObject.passUserDTO(zodGetPostDetailsDTO, this.getPostDetails.bind(this)));
     this.router.put("/:postId", passObject.passUserDTO(EditPostDTO.zod, this.editPost.bind(this)));
@@ -30,6 +30,8 @@ export class PostRoutes extends BaseRoutes {
   private editPost: Handler.UserDTO<EditPostDTO.Type> = (uid, dto) => {
     return async (req, res) => {
       try {
+        console.log(dto);
+        
         const postId = dto.postId;
         const tags = dto.tags;
         const basePost = { description: dto.description, closeFriendsOnly: dto.closeFriendsOnly };

@@ -1,12 +1,9 @@
 import { RequestHandler } from "express";
+import { errorResponse } from "../tools/error.response.tools";
+import { NotFoundError } from "../errors/http.error";
 
 export function defaultHandler(): RequestHandler {
   return (_, res) => {
-    res.status(404).send({
-      success: false,
-      error: {
-        message: "endpoint not found!",
-      },
-    });
+    errorResponse(res, new NotFoundError("endpoint not found!"));
   };
 }

@@ -13,7 +13,6 @@ import {
   zodUserInfoDTO,
   UserInfoDTO,
 } from "~/controllers/dtos/user.dtos";
-import { UUID } from "crypto";
 import { upload } from "../middleware/upload";
 
 export class UserRoutes extends BaseRoutes {

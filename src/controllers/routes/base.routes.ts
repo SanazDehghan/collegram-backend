@@ -4,6 +4,7 @@ import { ZodError, ZodIssue } from "zod";
 import { errorMapper } from "../tools/errorMapper.tools";
 import { HttpError } from "../errors/http.error";
 import { UploadImageDTO } from "../dtos/image.dtos";
+import { errorResponse } from "../tools/error.response.tools";
 
 interface SuccessOutput {
   success: true;
@@ -18,7 +19,7 @@ interface ErrorOutput {
   };
 }
 
-type Output = SuccessOutput | ErrorOutput;
+export type Output = SuccessOutput | ErrorOutput;
 
 export namespace Handler {
   export type UID = (uid: UUID) => RequestHandler;
@@ -43,20 +44,7 @@ export abstract class BaseRoutes {
     res.send(output);
   }
 
-  protected sendError(res: Response, err: unknown) {
-    const error = errorMapper(err);
-
-    const output: Output = { success: false, error: { message: "an error occurred" } };
-    let status = 500;
-
-    if (error instanceof HttpError) {
-      output.error.message = error.message;
-      status = error.status;
-    } else if (error instanceof ZodError) {
-      output.error.issues = error.issues;
-      status = 400;
-    }
-
-    res.status(status).send(output);
+  protected sendError(res: Response, error: unknown) {
+    errorResponse(res, errorMapper(error));
   }
 }
