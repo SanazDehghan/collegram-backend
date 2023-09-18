@@ -72,46 +72,37 @@ describe("Testing Post Services", () => {
   });
 
   test("like post", async () => {
-    await expect(postServices.likePost(userId, postId)).resolves.toBe("OK");
+    await expect(postServices.togglePostLike(userId, postId)).resolves.toBe("LIKED");
   });
 
   test("like post: should be liked before", async () => {
-    await postServices.likePost(userId, postId);
-    await expect(postServices.likePost(userId, postId)).resolves.toBe("LIKED_BEFORE");
+    await postServices.togglePostLike(userId, postId);
+    await expect(postServices.togglePostLike(userId, postId)).resolves.toBe("LIKE_REMOVED");
   });
 
   test("like post: should fail due to wrong postId", async () => {
-    await expect(postServices.likePost(userId, "85d4d57c-a98f-4600-9a2e-e51be3e066f0" as UUID)).rejects.toThrow(
+    await expect(postServices.togglePostLike(userId, "85d4d57c-a98f-4600-9a2e-e51be3e066f0" as UUID)).rejects.toThrow(
       PostNotFound,
     );
   });
 
   test("bookmark post", async () => {
-    await expect(postServices.bookmarkPost(userId, postId, true)).resolves.toBe("OK");
+    await expect(postServices.toggleBookmarkPost(userId, postId)).resolves.toBe("BOOKMARKED");
   });
 
-  test("bookmark post: should already be bookmarked", async () => {
-    await postServices.bookmarkPost(userId, postId, true);
-    await expect(postServices.bookmarkPost(userId, postId, true)).resolves.toBe("ALREADY_BOOKMARKED");
-  });
-
-  test("remove bookmark: has no bookmarks", async () => {
-    await expect(postServices.bookmarkPost(userId, postId, false)).resolves.toBe("NOT_BOOKMARKED");
-  });
-
-  test("remove bookmark", async () => {
-    await postServices.bookmarkPost(userId, postId, true);
-    await expect(postServices.bookmarkPost(userId, postId, false)).resolves.toBe("OK");
+  test("remove post bookmark", async () => {
+    await postServices.toggleBookmarkPost(userId, postId);
+    await expect(postServices.toggleBookmarkPost(userId, postId)).resolves.toBe("BOOKMARK_REMOVED");
   });
 
   test("bookmark post: should fail due to wrong postId", async () => {
     await expect(
-      postServices.bookmarkPost(userId, "85d4d57c-a98f-4600-9a2e-e51be3e066f0" as UUID, true),
+      postServices.toggleBookmarkPost(userId, "85d4d57c-a98f-4600-9a2e-e51be3e066f0" as UUID),
     ).rejects.toThrow(PostNotFound);
   });
 
   test("get my bookmarks", async () => {
-    await postServices.bookmarkPost(userId, postId, true);
+    await postServices.toggleBookmarkPost(userId, postId);
 
     const result = await postServices.getMyBookmarks(userId, 1 as PaginationNumber, 1 as PaginationNumber);
     expect(result.items[0]).toHaveProperty("id", postId);

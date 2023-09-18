@@ -28,13 +28,12 @@ export interface IPostRepo {
     basePost: BasePost.basePostType,
   ) => Promise<PostsEntity | null>;
   getPostDetails: (postId: UUID) => Promise<PostDetailsDAO.Type | null>;
-  isLikedBy: (userId: UUID, postId: UUID) => Promise<boolean>;
-  likeAndUpdateCount: (userId: UUID, postId: UUID) => Promise<"ERROR_POST_NOT_FOUND" | "LIKED_BEFORE" | "OK">;
-  bookmarkAndUpdateCount: (userId: UUID, postId: UUID) => Promise<"ERROR_POST_NOT_FOUND" | "ALREADY_BOOKMARKED" | "OK">;
-  removeBookmarkAndUpdateCount: (
+  getLikeRecord: (userId: UUID, postId: UUID) => Promise<{ id: number } | null>;
+  toggleLikeAndUpdateCount: (userId: UUID, postId: UUID) => Promise<"ERROR_POST_NOT_FOUND" | "LIKED" | "LIKE_REMOVED">;
+  toggleBookmarkAndUpdateCount: (
     userId: UUID,
     postId: UUID,
-  ) => Promise<"ERROR_POST_NOT_FOUND" | "NOT_BOOKMARKED" | "OK">;
+  ) => Promise<"ERROR_POST_NOT_FOUND" | "BOOKMARKED" | "BOOKMARK_REMOVED">;
   getUserBookmarks: (
     userId: UUID,
     limit: PaginationNumber,
@@ -146,32 +145,35 @@ export class PostRepo implements IPostRepo {
     return parseDAO(PostDetailsDAO.zod, result);
   }
 
-  public async isLikedBy(userId: UUID, postId: UUID) {
+  public async getLikeRecord(userId: UUID, postId: UUID) {
     const record = await this.postLikesRepo.findOne({
       select: { id: true },
       where: { userId, postId, unLikedAt: IsNull() },
     });
 
-    return record !== null;
+    return record;
   }
 
-  public async likeAndUpdateCount(userId: UUID, postId: UUID) {
+  public async toggleLikeAndUpdateCount(userId: UUID, postId: UUID) {
     const post = await this.repository.findOneBy({ id: postId });
 
     if (post === null) {
       return "ERROR_POST_NOT_FOUND";
     }
 
-    const isLikedBefore = await this.isLikedBy(userId, postId);
+    const likeRecord = await this.getLikeRecord(userId, postId);
 
-    if (isLikedBefore) {
-      return "LIKED_BEFORE";
+    if (likeRecord === null) {
+      await this.postLikesRepo.save({ userId, postId });
+      await this.repository.update(postId, { likes: post.likes + 1 });
+
+      return "LIKED";
+    } else {
+      await this.postLikesRepo.update(likeRecord.id, { unLikedAt: new Date() });
+      await this.repository.update(postId, { likes: post.likes - 1 });
+
+      return "LIKE_REMOVED";
     }
-
-    await this.postLikesRepo.save({ userId, postId });
-    await this.repository.update(postId, { likes: post.likes + 1 });
-
-    return "OK";
   }
 
   private async getBookmark(userId: UUID, postId: UUID) {
@@ -183,26 +185,7 @@ export class PostRepo implements IPostRepo {
     return record;
   }
 
-  public async bookmarkAndUpdateCount(userId: UUID, postId: UUID) {
-    const post = await this.repository.findOneBy({ id: postId });
-
-    if (post === null) {
-      return "ERROR_POST_NOT_FOUND";
-    }
-
-    const bookmarkRecord = await this.getBookmark(userId, postId);
-
-    if (bookmarkRecord !== null) {
-      return "ALREADY_BOOKMARKED";
-    }
-
-    await this.postBookmarksRepo.save({ userId, postId });
-    await this.repository.update(postId, { bookmarks: post.bookmarks + 1 });
-
-    return "OK";
-  }
-
-  public async removeBookmarkAndUpdateCount(userId: UUID, postId: UUID) {
+  public async toggleBookmarkAndUpdateCount(userId: UUID, postId: UUID) {
     const post = await this.repository.findOneBy({ id: postId });
 
     if (post === null) {
@@ -212,19 +195,22 @@ export class PostRepo implements IPostRepo {
     const bookmarkRecord = await this.getBookmark(userId, postId);
 
     if (bookmarkRecord === null) {
-      return "NOT_BOOKMARKED";
+      await this.postBookmarksRepo.save({ userId, postId });
+      await this.repository.update(postId, { bookmarks: post.bookmarks + 1 });
+
+      return "BOOKMARKED";
+    } else {
+      await this.postBookmarksRepo.update(bookmarkRecord.id, { deletedAt: new Date() });
+      await this.repository.update(postId, { bookmarks: post.bookmarks - 1 });
+
+      return "BOOKMARK_REMOVED";
     }
-
-    await this.postBookmarksRepo.update(bookmarkRecord.id, { deletedAt: new Date() });
-    await this.repository.update(postId, { bookmarks: post.bookmarks - 1 });
-
-    return "OK";
   }
 
   private async getUserBookmarkedPosts(userId: UUID) {
     const records = await this.postBookmarksRepo.find({
       select: { postId: true },
-      where: { userId },
+      where: { userId, deletedAt: IsNull() },
     });
 
     const postIds = records.map((record) => record.postId);

@@ -46,8 +46,7 @@ export namespace LikePostDTO {
 
 export namespace BookmarkPostDTO {
   export const zod = z.object({
-    postId: zodUUID,
-    bookmark: z.boolean(),
+    postId: zodUUID
   });
 
   export type Type = z.infer<typeof zod>;

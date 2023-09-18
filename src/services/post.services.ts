@@ -68,7 +68,8 @@ export class PostServices {
       throw new PostNotFound();
     }
 
-    const isLiked = await this.postRepo.isLikedBy(userId, postId);
+    const likeRecord = await this.postRepo.getLikeRecord(userId, postId);
+    const isLiked = likeRecord !== null
 
     const result = { ...post, isLiked };
 
@@ -87,8 +88,8 @@ export class PostServices {
     return post;
   }
 
-  public async likePost(uid: UUID, postId: UUID) {
-    const result = await this.postRepo.likeAndUpdateCount(uid, postId);
+  public async togglePostLike(uid: UUID, postId: UUID) {
+    const result = await this.postRepo.toggleLikeAndUpdateCount(uid, postId);
 
     if (result === "ERROR_POST_NOT_FOUND") {
       throw new PostNotFound();
@@ -97,10 +98,8 @@ export class PostServices {
     return result;
   }
 
-  public async bookmarkPost(uid: UUID, postId: UUID, bookmark: boolean) {
-    const result = bookmark
-      ? await this.postRepo.bookmarkAndUpdateCount(uid, postId)
-      : await this.postRepo.removeBookmarkAndUpdateCount(uid, postId);
+  public async toggleBookmarkPost(uid: UUID, postId: UUID) {
+    const result = await this.postRepo.toggleBookmarkAndUpdateCount(uid, postId);
 
     if (result === "ERROR_POST_NOT_FOUND") {
       throw new PostNotFound();

@@ -21,7 +21,7 @@ export class PostRoutes extends BaseRoutes {
 
     this.router.post("/", upload.files("photos", 5), upload.passData(ADDPostDTO.zod, this.addPost.bind(this)));
     this.router.get("/", passObject.passUserDTO(zodGetMyPostsDTO, this.getMyPosts.bind(this)));
-    this.router.post("/like", passObject.passUserDTO(LikePostDTO.zod, this.likePost.bind(this)));
+    this.router.put("/like", passObject.passUserDTO(LikePostDTO.zod, this.likePost.bind(this)));
     this.router.get("/bookmark", passObject.passUserDTO(GetMyBookmarksDTO.zod, this.getMyBookmarks.bind(this)));
     this.router.put("/bookmark", passObject.passUserDTO(BookmarkPostDTO.zod, this.bookmarkPost.bind(this)));
     this.router.get("/followings", passObject.passUserDTO(FollowingsPostsDTO.zod, this.getFollowingsPosts.bind(this)));
@@ -88,7 +88,7 @@ export class PostRoutes extends BaseRoutes {
   private likePost: Handler.UserDTO<LikePostDTO.Type> = (uid, dto) => {
     return async (req, res) => {
       try {
-        const result = await this.service.likePost(uid, dto.postId);
+        const result = await this.service.togglePostLike(uid, dto.postId);
 
         this.sendData(res, result);
       } catch (error) {
@@ -100,8 +100,8 @@ export class PostRoutes extends BaseRoutes {
   private bookmarkPost: Handler.UserDTO<BookmarkPostDTO.Type> = (uid, dto) => {
     return async (req, res) => {
       try {
-        const { postId, bookmark } = dto;
-        const result = await this.service.bookmarkPost(uid, postId, bookmark);
+        const { postId } = dto;
+        const result = await this.service.toggleBookmarkPost(uid, postId);
 
         this.sendData(res, result);
       } catch (error) {

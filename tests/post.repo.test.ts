@@ -67,21 +67,21 @@ describe("Testing Post Repo", () => {
   });
 
   test("like and update count", async () => {
-    await expect(postRepo.likeAndUpdateCount(userId, postId)).resolves.toBe("OK");
+    await expect(postRepo.toggleLikeAndUpdateCount(userId, postId)).resolves.toBe("LIKED");
     await expect(postRepo.getPostDetails(postId)).resolves.toHaveProperty("likes", 1);
   });
 
-  test("like and update count: shouldn't update count; already liked;", async () => {
-    await postRepo.likeAndUpdateCount(userId, postId);
+  test("remove like and update count", async () => {
+    await postRepo.toggleLikeAndUpdateCount(userId, postId);
 
-    await expect(postRepo.likeAndUpdateCount(userId, postId)).resolves.toBe("LIKED_BEFORE");
-    await expect(postRepo.getPostDetails(postId)).resolves.toHaveProperty("likes", 1);
+    await expect(postRepo.toggleLikeAndUpdateCount(userId, postId)).resolves.toBe("LIKE_REMOVED");
+    await expect(postRepo.getPostDetails(postId)).resolves.toHaveProperty("likes", 0);
   });
 
   test("like and update count: should fail due to wrong post id", async () => {
-    await expect(postRepo.likeAndUpdateCount(userId, "85d4d57c-a98f-4600-9a2e-e51be3e066f0" as UUID)).resolves.toBe(
-      "ERROR_POST_NOT_FOUND",
-    );
+    await expect(
+      postRepo.toggleLikeAndUpdateCount(userId, "85d4d57c-a98f-4600-9a2e-e51be3e066f0" as UUID),
+    ).resolves.toBe("ERROR_POST_NOT_FOUND");
   });
 
   test("should edit user post", async () => {
@@ -94,41 +94,25 @@ describe("Testing Post Repo", () => {
   });
 
   test("bookmark and update count", async () => {
-    await expect(postRepo.bookmarkAndUpdateCount(userId, postId)).resolves.toBe("OK");
+    await expect(postRepo.toggleBookmarkAndUpdateCount(userId, postId)).resolves.toBe("BOOKMARKED");
     await expect(postRepo.getPostDetails(postId)).resolves.toHaveProperty("bookmarks", 1);
   });
 
-  test("bookmark and update count: shouldn't update count; already bookmarked;", async () => {
-    await postRepo.bookmarkAndUpdateCount(userId, postId);
-
-    await expect(postRepo.bookmarkAndUpdateCount(userId, postId)).resolves.toBe("ALREADY_BOOKMARKED");
-  });
-
-  test("bookmark and update count: should fail due to wrong post id", async () => {
-    await expect(postRepo.bookmarkAndUpdateCount(userId, "85d4d57c-a98f-4600-9a2e-e51be3e066f0" as UUID)).resolves.toBe(
-      "ERROR_POST_NOT_FOUND",
-    );
-  });
-
   test("remove bookmark and update count", async () => {
-    await postRepo.bookmarkAndUpdateCount(userId, postId);
+    await postRepo.toggleBookmarkAndUpdateCount(userId, postId);
 
-    await expect(postRepo.removeBookmarkAndUpdateCount(userId, postId)).resolves.toBe("OK");
+    await expect(postRepo.toggleBookmarkAndUpdateCount(userId, postId)).resolves.toBe("BOOKMARK_REMOVED");
     await expect(postRepo.getPostDetails(postId)).resolves.toHaveProperty("bookmarks", 0);
-  });
-
-  test("bookmark and update count: shouldn't update count; already bookmarked;", async () => {
-    await expect(postRepo.removeBookmarkAndUpdateCount(userId, postId)).resolves.toBe("NOT_BOOKMARKED");
   });
 
   test("bookmark and update count: should fail due to wrong post id", async () => {
     await expect(
-      postRepo.removeBookmarkAndUpdateCount(userId, "85d4d57c-a98f-4600-9a2e-e51be3e066f0" as UUID),
+      postRepo.toggleBookmarkAndUpdateCount(userId, "85d4d57c-a98f-4600-9a2e-e51be3e066f0" as UUID),
     ).resolves.toBe("ERROR_POST_NOT_FOUND");
   });
 
   test("get user bookmarks", async () => {
-    await postRepo.bookmarkAndUpdateCount(userId, postId);
+    await postRepo.toggleBookmarkAndUpdateCount(userId, postId);
 
     const result = await postRepo.getUserBookmarks(userId, 1 as PaginationNumber, 1 as PaginationNumber);
     expect(result[0][0]).toHaveProperty("id", postId);
