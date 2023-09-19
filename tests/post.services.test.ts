@@ -124,14 +124,14 @@ describe("Testing Post Services", () => {
   });
 
   test("should get all followings posts", async () => {
-    const followingUserId = await userRepo.addUserWithPassword(
+    const followerId = await userRepo.addUserWithPassword(
       { email: "email2" as Email, username: "username2" as Username, isPrivate: false },
       hash,
     );
-    await userRelationsServices.follow(userId, {id: followingUserId, isPrivate: false});
+    await userRelationsServices.follow(followerId, {id: userId, isPrivate: false});
 
-    const result = await postServices.getAllFollowingsPosts(userId, 1 as PaginationNumber, 1 as PaginationNumber);
-    
+    const result = await postServices.getAllFollowingsPosts(followerId, 1 as PaginationNumber, 1 as PaginationNumber);
+
     expect(result.items[0]?.id).toBe(postId);
   });
 });
