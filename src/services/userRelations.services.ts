@@ -1,5 +1,5 @@
 import { IUserRelationsRepo } from "~/repository/userRelations.repo";
-import { ForbiddenFollowUser, UserNotFound } from "./errors/service.errors";
+import { ForbiddenFollowUser } from "./errors/service.errors";
 import { UUID } from "crypto";
 import { IUserRelations, UserRelationTypes } from "~/models/user.models";
 

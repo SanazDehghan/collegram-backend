@@ -1,8 +1,7 @@
 import { UUID } from "crypto";
 import { dataManager } from "~/DataManager";
 import { UserRelationsEntity } from "~/entities/userRelations.entities";
-import { FollowRelationsDAO, GetRelationsDAO } from "./daos/userRelations.daos";
-import { UsersEntity } from "~/entities/user.entities";
+import { GetRelationsDAO } from "./daos/userRelations.daos";
 import { UserRelationTypes } from "~/models/user.models";
 import { IsNull } from "typeorm";
 
@@ -14,9 +13,8 @@ export interface IUserRelationsRepo {
 
 export class UserRelationsRepo implements IUserRelationsRepo {
   private repository = dataManager.source.getRepository(UserRelationsEntity);
-  private userRepo = dataManager.source.getRepository(UsersEntity);
 
-  public async getRelations(followerId: UUID, followingId: UUID) {
+  public async getRelations(firstUserId: UUID, secondUserId: UUID) {
     const relation = await this.repository.find({
       select: {
         user1Id: true,
@@ -25,13 +23,13 @@ export class UserRelationsRepo implements IUserRelationsRepo {
       },
       where: [
         {
-          user1Id: followerId,
-          user2Id: followingId,
+          user1Id: firstUserId,
+          user2Id: secondUserId,
           deletedAt: IsNull(),
         },
         {
-          user1Id: followingId,
-          user2Id: followerId,
+          user1Id: secondUserId,
+          user2Id: firstUserId,
           deletedAt: IsNull(),
         },
       ],
