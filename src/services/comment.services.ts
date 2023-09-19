@@ -1,21 +1,20 @@
 import { UUID } from "crypto";
 import { AddComment, AllComment, CommentText } from "~/models/comment.models";
 import { ICommentRepo } from "~/repository/comment.repo";
-import { CommentNotFound, InvalidCommentError, PostNotFound } from "./errors/service.errors";
+import { CommentNotFound, InvalidCommentError, ParentCommentNotFound, PostNotFound } from "./errors/service.errors";
 import { Pagination, PaginationNumber, createPagination } from "~/models/common";
 
 export class CommentServices {
   constructor(private commentRepo: ICommentRepo) {}
 
-  public async addComment(
-    userId: UUID,
-    postId: UUID,
-    text: CommentText,
-    parentId?: UUID,
-  ) {
+  public async addComment(userId: UUID, postId: UUID, text: CommentText, parentId?: UUID) {
     const addedComment = await this.commentRepo.addComment(userId, postId, text, parentId);
-    if (addedComment === null) {
-      throw new InvalidCommentError();
+    if (addedComment === "Post not valid!") {
+      throw new PostNotFound();
+    }
+
+    if (addedComment === "parentId not found!") {
+      throw new ParentCommentNotFound();
     }
     return addedComment;
   }

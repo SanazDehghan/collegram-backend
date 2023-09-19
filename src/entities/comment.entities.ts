@@ -29,7 +29,7 @@ export class CommentsEntity {
   post!: PostsEntity;
 
   @Column()
-  text!: string;
+  commentText!: string;
 
   @Column("uuid", { nullable: true })
   parentId?: UUID;

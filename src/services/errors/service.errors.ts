@@ -23,3 +23,5 @@ export class CommentNotFound extends ServiceError {}
 export class InvalidCommentError extends ServiceError {}
 
 export class ForbiddenFollowUser extends ServiceError {}
+
+export class ParentCommentNotFound extends ServiceError {}

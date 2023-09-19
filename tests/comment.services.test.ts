@@ -1,7 +1,7 @@
 import { CommentServices } from "../src/services/comment.services";
 import { ICommentRepo } from "~/repository/comment.repo";
 import { AddComment, AllComment, CommentText } from "~/models/comment.models";
-import { InvalidCommentError, PostNotFound } from "../src/services/errors/service.errors";
+import { InvalidCommentError, ParentCommentNotFound, PostNotFound } from "../src/services/errors/service.errors";
 import { PaginationNumber, createPagination } from "~/models/common";
 import { UUID } from "crypto";
 import { CommentDAO } from "~/repository/daos/comment.daos";
@@ -19,11 +19,7 @@ class CommentRepoMock implements ICommentRepo {
     };
   }
 
-  async getAllPostComment(
-    postId: UUID,
-    limit: PaginationNumber,
-    page: PaginationNumber,
-  ) {
+  async getAllPostComment(postId: UUID, limit: PaginationNumber, page: PaginationNumber) {
     // Simulate retrieving comments, replace with mock data
     const comments = [
       {
@@ -84,11 +80,24 @@ describe("CommentServices", () => {
       const text = "Test comment" as CommentText;
       const parentId = undefined;
 
-      CommentRepoMock.prototype.addComment = jest.fn().mockResolvedValue(null);
+      CommentRepoMock.prototype.addComment = jest.fn().mockResolvedValue("Post not valid!");
 
-      await expect(commentService.addComment(userId, postId, text, parentId)).rejects.toThrow(InvalidCommentError);
+      await expect(commentService.addComment(userId, postId, text, parentId)).rejects.toThrow(PostNotFound);
     });
   });
+
+  it("should throw ParentCommentNotFound if commentRepo returns null", async () => {
+    const userId = "user123" as UUID;
+    const postId = "post456" as UUID;
+    const text = "Test comment" as CommentText;
+    const parentId = "parent123" as UUID;
+
+    CommentRepoMock.prototype.addComment = jest.fn().mockResolvedValue("parentId not found!");
+
+    await expect(commentService.addComment(userId, postId, text, parentId)).rejects.toThrow(ParentCommentNotFound);
+  });
+
+
 
   describe("getComment", () => {
     it("should return paginated comments", async () => {
@@ -100,7 +109,7 @@ describe("CommentServices", () => {
 
       expect(result).toBeDefined();
       expect(result.items.length).toBe(2); // Mock data has 2 comments
-    //   expect(result.totalItems).toBe(2); // Mock data has a total of 2 comments
+      //   expect(result.totalItems).toBe(2); // Mock data has a total of 2 comments
     });
   });
 });

@@ -9,6 +9,10 @@ import { PostServices } from "~/services/post.services";
 import { PostRepo } from "~/repository/post.repo";
 import { UserRelationsServices } from "~/services/userRelations.services";
 import { UserRelationsRepo } from "~/repository/userRelations.repo";
+import { CommentRoutes } from "./routes/comment.routes";
+import { CommentServices } from "~/services/comment.services";
+import { CommentNotFound } from "~/services/errors/service.errors";
+import { CommentRepo } from "~/repository/comment.repo";
 
 const userRelationsServices = new UserRelationsServices(new UserRelationsRepo());
 
@@ -23,4 +27,5 @@ export const routes = [
     ),
   ),
   new PostRoutes(new PostServices(new PostRepo(), userRelationsServices)),
+  new CommentRoutes(new CommentServices(new CommentRepo())),
 ];

@@ -11,7 +11,12 @@ import { parseDAO } from "./tool/parse";
 import { PostsEntity } from "~/entities/post.entities";
 
 export interface ICommentRepo {
-  addComment: (userId: UUID, postId: UUID, text: CommentText, parentId?: UUID) => Promise<CommentDAO.Type | null>;
+  addComment: (
+    userId: UUID,
+    postId: UUID,
+    text: CommentText,
+    parentId?: UUID,
+  ) => Promise<CommentDAO.Type | "Post not valid!" | "parentId not found!">;
   getAllPostComment: (
     psotId: UUID,
     limit: PaginationNumber,
@@ -26,19 +31,23 @@ export class CommentRepo implements ICommentRepo {
 
   public async addComment(uid: UUID, postId: UUID, text: CommentText, parentId: AddComment.Type["parentId"]) {
     const post = await this.postRepo.findOneBy({ id: postId });
-
     if (post === null) {
-      return null;
+      return "Post not valid!";
+    }
+
+    if (parentId) {
+      const parent = await this.repository.findOneBy({ id: parentId });
+      if (parent === null) {
+        return "parentId not found!";
+      }
     }
     const result = await this.repository.save({
       userId: uid,
       postId: postId,
-      text: text,
+      commentText: text,
       parentId: parentId,
     });
-
     await this.postRepo.update(postId, { commentsNum: post.commentsNum + 1 });
-
     return parseDAO(CommentDAO.zod, result);
   }
 
