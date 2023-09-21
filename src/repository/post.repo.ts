@@ -258,9 +258,11 @@ export class PostRepo implements IPostRepo {
           firstName: true,
           lastName: true,
         },
+        createdAt: true,
       },
       relations: { images: true, tags: true, user: true },
       where: { userId: In(userIds) },
+      order: { createdAt: "DESC" },
       take: limit,
       skip,
     });
