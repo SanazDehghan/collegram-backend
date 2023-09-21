@@ -7,7 +7,7 @@ import { AllComment, AddComment, CommentText } from "~/models/comment.models";
 import { PaginationNumber } from "~/models/common";
 import { BasePost } from "~/models/post.models";
 import { CommentDAO, GetAllCommentPostsDAO } from "./daos/comment.daos";
-import { parseDAO } from "./tool/parse";
+import { parseDAO } from "./tools/parse";
 import { PostsEntity } from "~/entities/post.entities";
 
 export interface ICommentRepo {
