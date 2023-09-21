@@ -6,7 +6,15 @@ import { UploadedImage } from "~/models/image.models";
 import { BasePost } from "~/models/post.models";
 import { BaseTag } from "~/models/tag.models";
 import { TagsEntity } from "../entities/tag.entities";
-import { GetAllUserPostsDAO, GetPostsByUserIdsDAO, GetUserBookmarksDAO, PostDetailsDAO } from "./daos/post.daos";
+import {
+  GetAllUserPostsDAO,
+  GetBookmarkRecordDAO,
+  GetLikeRecordDAO,
+  GetPostByIdDAO,
+  GetPostsByUserIdsDAO,
+  GetUserBookmarksDAO,
+  PostDetailsDAO,
+} from "./daos/post.daos";
 import { parseDAO } from "./tools/parse";
 import { PostLikesEntity } from "../entities/postLikes.entities";
 import { PostBookmarksEntity } from "../entities/postBookmarks.entities";
@@ -28,12 +36,13 @@ export interface IPostRepo {
     basePost: BasePost.basePostType,
   ) => Promise<PostsEntity | null>;
   getPostDetails: (postId: UUID) => Promise<PostDetailsDAO.Type | null>;
-  getLikeRecord: (userId: UUID, postId: UUID) => Promise<{ id: number } | null>;
-  toggleLikeAndUpdateCount: (userId: UUID, postId: UUID) => Promise<"ERROR_POST_NOT_FOUND" | "LIKED" | "LIKE_REMOVED">;
-  toggleBookmarkAndUpdateCount: (
-    userId: UUID,
-    postId: UUID,
-  ) => Promise<"ERROR_POST_NOT_FOUND" | "BOOKMARKED" | "BOOKMARK_REMOVED">;
+  getPostById: (postId: UUID) => Promise<GetPostByIdDAO.Type | null>;
+  getLikeRecord: (userId: UUID, postId: UUID) => Promise<GetLikeRecordDAO.Type | null>;
+  addNewPostLike: (userId: UUID, postId: UUID, newLikesCount: number) => Promise<void>;
+  removePostLike: (likeRecord: GetLikeRecordDAO.Type, newLikesCount: number) => Promise<void>;
+  getBookmarkRecord: (userId: UUID, postId: UUID) => Promise<GetBookmarkRecordDAO.Type | null>;
+  addNewPostBookmark: (userId: UUID, postId: UUID, newBookmarksCount: number) => Promise<void>;
+  removePostBookmark: (bookmarkRecord: GetBookmarkRecordDAO.Type, newBookmarksCount: number) => Promise<void>;
   getUserBookmarks: (
     userId: UUID,
     limit: PaginationNumber,
@@ -145,66 +154,42 @@ export class PostRepo implements IPostRepo {
     return parseDAO(PostDetailsDAO.zod, result);
   }
 
+  public async getPostById(postId: UUID) {
+    const result = await this.repository.findOneBy({ id: postId });
+
+    return parseDAO(GetPostByIdDAO.zod.nullable(), result);
+  }
+
   public async getLikeRecord(userId: UUID, postId: UUID) {
-    const record = await this.postLikesRepo.findOne({
-      select: { id: true },
-      where: { userId, postId, unLikedAt: IsNull() },
-    });
+    const record = await this.postLikesRepo.findOneBy({ userId, postId, unLikedAt: IsNull() });
 
-    return record;
+    return parseDAO(GetLikeRecordDAO.zod.nullable(), record);
   }
 
-  public async toggleLikeAndUpdateCount(userId: UUID, postId: UUID) {
-    const post = await this.repository.findOneBy({ id: postId });
-
-    if (post === null) {
-      return "ERROR_POST_NOT_FOUND";
-    }
-
-    const likeRecord = await this.getLikeRecord(userId, postId);
-
-    if (likeRecord === null) {
-      await this.postLikesRepo.save({ userId, postId });
-      await this.repository.update(postId, { likes: post.likes + 1 });
-
-      return "LIKED";
-    } else {
-      await this.postLikesRepo.update(likeRecord.id, { unLikedAt: new Date() });
-      await this.repository.update(postId, { likes: post.likes - 1 });
-
-      return "LIKE_REMOVED";
-    }
+  public async addNewPostLike(userId: UUID, postId: UUID, newLikesCount: number) {
+    await this.postLikesRepo.save({ userId, postId });
+    await this.repository.update(postId, { likes: newLikesCount });
   }
 
-  private async getBookmark(userId: UUID, postId: UUID) {
-    const record = await this.postBookmarksRepo.findOne({
-      select: { id: true },
-      where: { userId, postId, deletedAt: IsNull() },
-    });
-
-    return record;
+  public async removePostLike(likeRecord: GetLikeRecordDAO.Type, newLikesCount: number) {
+    await this.postLikesRepo.update(likeRecord.id, { unLikedAt: new Date() });
+    await this.repository.update(likeRecord.postId, { likes: newLikesCount });
   }
 
-  public async toggleBookmarkAndUpdateCount(userId: UUID, postId: UUID) {
-    const post = await this.repository.findOneBy({ id: postId });
+  public async getBookmarkRecord(userId: UUID, postId: UUID) {
+    const record = await this.postBookmarksRepo.findOneBy({ userId, postId, deletedAt: IsNull() });
 
-    if (post === null) {
-      return "ERROR_POST_NOT_FOUND";
-    }
+    return parseDAO(GetBookmarkRecordDAO.zod.nullable(), record);
+  }
 
-    const bookmarkRecord = await this.getBookmark(userId, postId);
+  public async addNewPostBookmark(userId: UUID, postId: UUID, newBookmarksCount: number) {
+    await this.postBookmarksRepo.save({ userId, postId });
+    await this.repository.update(postId, { bookmarks: newBookmarksCount });
+  }
 
-    if (bookmarkRecord === null) {
-      await this.postBookmarksRepo.save({ userId, postId });
-      await this.repository.update(postId, { bookmarks: post.bookmarks + 1 });
-
-      return "BOOKMARKED";
-    } else {
-      await this.postBookmarksRepo.update(bookmarkRecord.id, { deletedAt: new Date() });
-      await this.repository.update(postId, { bookmarks: post.bookmarks - 1 });
-
-      return "BOOKMARK_REMOVED";
-    }
+  public async removePostBookmark(bookmarkRecord: GetBookmarkRecordDAO.Type, newBookmarksCount: number) {
+    await this.postBookmarksRepo.update(bookmarkRecord.id, { deletedAt: new Date() });
+    await this.repository.update(bookmarkRecord.postId, { bookmarks: newBookmarksCount });
   }
 
   private async getUserBookmarkedPosts(userId: UUID) {

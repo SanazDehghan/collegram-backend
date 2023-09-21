@@ -9,6 +9,7 @@ import { PostRepo } from "~/repository/post.repo";
 import { UserRepo } from "~/repository/user.repo";
 import { UserRelationsServices } from "../src/services/userRelations.services";
 import { UserRelationsRepo } from "../src/repository/userRelations.repo";
+import { v4 } from "uuid";
 
 describe("Testing Post Repo", () => {
   let userRepo: UserRepo;
@@ -66,22 +67,28 @@ describe("Testing Post Repo", () => {
     ).resolves.toHaveProperty("1", 1);
   });
 
-  test("like and update count", async () => {
-    await expect(postRepo.toggleLikeAndUpdateCount(userId, postId)).resolves.toBe("LIKED");
-    await expect(postRepo.getPostDetails(postId)).resolves.toHaveProperty("likes", 1);
+  test("get post by id", async () => {
+    await expect(postRepo.getPostById(postId)).resolves.toHaveProperty("id", postId);
   });
 
-  test("remove like and update count", async () => {
-    await postRepo.toggleLikeAndUpdateCount(userId, postId);
-
-    await expect(postRepo.toggleLikeAndUpdateCount(userId, postId)).resolves.toBe("LIKE_REMOVED");
-    await expect(postRepo.getPostDetails(postId)).resolves.toHaveProperty("likes", 0);
+  test("should not be able to find post", async () => {
+    await expect(postRepo.getPostById(v4() as UUID)).resolves.toBeNull();
   });
 
-  test("like and update count: should fail due to wrong post id", async () => {
-    await expect(
-      postRepo.toggleLikeAndUpdateCount(userId, "85d4d57c-a98f-4600-9a2e-e51be3e066f0" as UUID),
-    ).resolves.toBe("ERROR_POST_NOT_FOUND");
+  test("add new post like", async () => {
+    await postRepo.addNewPostLike(userId, postId, 5);
+
+    await expect(postRepo.getLikeRecord(userId, postId)).resolves.not.toBeNull();
+    await expect(postRepo.getPostById(postId)).resolves.toHaveProperty("likes", 5);
+  });
+
+  test("remove post like", async () => {
+    await postRepo.addNewPostLike(userId, postId, 5);
+    const likeRecord = await postRepo.getLikeRecord(userId, postId)
+    await postRepo.removePostLike(likeRecord!, 4)
+
+    await expect(postRepo.getLikeRecord(userId, postId)).resolves.toBeNull();
+    await expect(postRepo.getPostById(postId)).resolves.toHaveProperty("likes", 4);
   });
 
   test("should edit user post", async () => {
@@ -93,33 +100,32 @@ describe("Testing Post Repo", () => {
     expect(res?.description).toEqual("description");
   });
 
-  test("bookmark and update count", async () => {
-    await expect(postRepo.toggleBookmarkAndUpdateCount(userId, postId)).resolves.toBe("BOOKMARKED");
-    await expect(postRepo.getPostDetails(postId)).resolves.toHaveProperty("bookmarks", 1);
+  test("add new post bookmark", async () => {
+    await postRepo.addNewPostBookmark(userId, postId, 5);
+
+    await expect(postRepo.getBookmarkRecord(userId, postId)).resolves.not.toBeNull();
+    await expect(postRepo.getPostById(postId)).resolves.toHaveProperty("bookmarks", 5);
   });
 
-  test("remove bookmark and update count", async () => {
-    await postRepo.toggleBookmarkAndUpdateCount(userId, postId);
+  test("remove post bookmark", async () => {
+    await postRepo.addNewPostBookmark(userId, postId, 5);
+    const bookmarkRecord = await postRepo.getBookmarkRecord(userId, postId);
+    await postRepo.removePostBookmark(bookmarkRecord!, 4)
+    
 
-    await expect(postRepo.toggleBookmarkAndUpdateCount(userId, postId)).resolves.toBe("BOOKMARK_REMOVED");
-    await expect(postRepo.getPostDetails(postId)).resolves.toHaveProperty("bookmarks", 0);
-  });
-
-  test("bookmark and update count: should fail due to wrong post id", async () => {
-    await expect(
-      postRepo.toggleBookmarkAndUpdateCount(userId, "85d4d57c-a98f-4600-9a2e-e51be3e066f0" as UUID),
-    ).resolves.toBe("ERROR_POST_NOT_FOUND");
+    await expect(postRepo.getBookmarkRecord(userId, postId)).resolves.toBeNull();
+    await expect(postRepo.getPostById(postId)).resolves.toHaveProperty("bookmarks", 4);
   });
 
   test("get user bookmarks", async () => {
-    await postRepo.toggleBookmarkAndUpdateCount(userId, postId);
+    await postRepo.addNewPostBookmark(userId, postId, 5);
 
     const result = await postRepo.getUserBookmarks(userId, 1 as PaginationNumber, 1 as PaginationNumber);
     expect(result[0][0]).toHaveProperty("id", postId);
   });
 
   test("get posts by userIds", async () => {
-    const [result, total] = await postRepo.getPostsByUserIds([userId], 1 as PaginationNumber, 1 as PaginationNumber)
+    const [result, total] = await postRepo.getPostsByUserIds([userId], 1 as PaginationNumber, 1 as PaginationNumber);
 
     expect(result[0]?.id).toBe(postId);
   });

@@ -25,6 +25,42 @@ export namespace PostDetailsDAO {
   export type Type = z.infer<typeof zod>;
 }
 
+export namespace GetPostByIdDAO {
+  const zodCount = z.number().int().gte(0);
+
+  export const zod = z.object({
+    id: zodUUID,
+    userId: zodUUID,
+    closeFriendsOnly: z.boolean(),
+    description: zodDescription,
+    likes: zodCount,
+    bookmarks: zodCount,
+    commentsNum: zodCount,
+  });
+
+  export type Type = z.infer<typeof zod>;
+}
+
+export namespace GetLikeRecordDAO {
+  export const zod = z.object({
+    id: z.number(),
+    userId: zodUUID,
+    postId: zodUUID
+  });
+
+  export type Type = z.infer<typeof zod>;
+}
+
+export namespace GetBookmarkRecordDAO {
+  export const zod = z.object({
+    id: z.number(),
+    userId: zodUUID,
+    postId: zodUUID
+  });
+
+  export type Type = z.infer<typeof zod>;
+}
+
 export namespace GetAllUserPostsDAO {
   const minimalPost = z.object({
     id: zodUUID,
@@ -57,7 +93,7 @@ export namespace GetPostsByUserIdsDAO {
     bookmarks: z.number().int().gte(0),
     commentsNum: z.number().int().gte(0),
     images: z.array(Image.zod),
-    tags: z.array(z.object({value: Tag.zod})),
+    tags: z.array(z.object({ value: Tag.zod })),
     user: z.object({
       id: zodUUID,
       username: zodUsername,

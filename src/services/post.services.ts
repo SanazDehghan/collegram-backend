@@ -69,7 +69,7 @@ export class PostServices {
     }
 
     const likeRecord = await this.postRepo.getLikeRecord(userId, postId);
-    const isLiked = likeRecord !== null
+    const isLiked = likeRecord !== null;
 
     const result = { ...post, isLiked };
 
@@ -89,23 +89,43 @@ export class PostServices {
   }
 
   public async togglePostLike(uid: UUID, postId: UUID) {
-    const result = await this.postRepo.toggleLikeAndUpdateCount(uid, postId);
+    const post = await this.postRepo.getPostById(postId);
 
-    if (result === "ERROR_POST_NOT_FOUND") {
+    if (post === null) {
       throw new PostNotFound();
     }
 
-    return result;
+    const likeRecord = await this.postRepo.getLikeRecord(uid, postId);
+
+    if (likeRecord !== null) {
+      await this.postRepo.removePostLike(likeRecord, post.likes - 1);
+
+      return "LIKE_REMOVED";
+    }
+
+    await this.postRepo.addNewPostLike(uid, postId, post.likes + 1);
+
+    return "LIKED";
   }
 
   public async toggleBookmarkPost(uid: UUID, postId: UUID) {
-    const result = await this.postRepo.toggleBookmarkAndUpdateCount(uid, postId);
+    const post = await this.postRepo.getPostById(postId);
 
-    if (result === "ERROR_POST_NOT_FOUND") {
+    if (post === null) {
       throw new PostNotFound();
     }
 
-    return result;
+    const bookmarkRecord = await this.postRepo.getBookmarkRecord(uid, postId);
+
+    if (bookmarkRecord !== null) {
+      await this.postRepo.removePostBookmark(bookmarkRecord, post.bookmarks - 1);
+
+      return "BOOKMARK_REMOVED";
+    }
+
+    await this.postRepo.addNewPostBookmark(uid, postId, post.bookmarks + 1);
+
+    return "BOOKMARKED";
   }
 
   public async getMyBookmarks(userId: UUID, limit: PaginationNumber, page: PaginationNumber) {
@@ -115,7 +135,7 @@ export class PostServices {
 
     return createPagination(singleImagePosts, page, limit, total);
   }
-  
+
   public async getAllFollowingsPosts(uid: UUID, limit: PaginationNumber, page: PaginationNumber) {
     const followingsUserIds = await this.userRelationsServices.getUserFollowingIds(uid);
     const [followingsPosts, total] = await this.postRepo.getPostsByUserIds(followingsUserIds, limit, page);
