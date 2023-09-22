@@ -69,9 +69,11 @@ export class PostServices {
     }
 
     const likeRecord = await this.postRepo.getLikeRecord(userId, postId);
+    const bookmarkRecord = await this.postRepo.getBookmarkRecord(userId, postId);
     const isLiked = likeRecord !== null;
+    const isBookmarked = bookmarkRecord !== null;
 
-    const result = { ...post, isLiked };
+    const result = { ...post, isLiked, isBookmarked };
 
     return result;
   }
