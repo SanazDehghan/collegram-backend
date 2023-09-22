@@ -1,115 +1,110 @@
-import { CommentServices } from "../src/services/comment.services";
-import { ICommentRepo } from "~/repository/comment.repo";
-import { AddComment, AllComment, CommentText } from "~/models/comment.models";
-import { InvalidCommentError, ParentCommentNotFound, PostNotFound } from "../src/services/errors/service.errors";
-import { PaginationNumber, createPagination } from "~/models/common";
 import { UUID } from "crypto";
-import { CommentDAO } from "~/repository/daos/comment.daos";
+import { dataManager } from "../src/DataManager";
+import { PasswordHash, generatePasswordHash, Password } from "../src/models/password.models";
+import { BasePost, Description } from "../src/models/post.models";
+import { Tag } from "../src/models/tag.models";
+import { Email, Username } from "../src/models/user.models";
+import { PostRepo } from "../src/repository/post.repo";
+import { UserRepo } from "../src/repository/user.repo";
+import { PostServices } from "../src/services/post.services";
+import { ForbiddenNumberOfTags, ParentCommentNotFound, PostNotFound } from "../src/services/errors/service.errors";
+import { PaginationNumber } from "../src/models/common";
+import { IUserRelationsRepo, UserRelationsRepo } from "../src/repository/userRelations.repo";
+import { UserRelationsServices } from "../src/services/userRelations.services";
+import { CommentRepo } from "~/repository/comment.repo";
+import { CommentServices } from "~/services/comment.services";
+import { AddComment, CommentText } from "~/models/comment.models";
 
-class CommentRepoMock implements ICommentRepo {
-  async addComment(userId: UUID, postId: UUID, text: CommentText, parentId?: UUID) {
-    // Simulate adding a comment, return an object that matches the interface structure
-    return {
-      id: "123" as UUID, // Generate a unique ID for the mock comment
+describe("Testing Comment Services", () => {
+  let userRepo: UserRepo;
+  let postRepo: PostRepo;
+  let commentRepo: CommentRepo;
+  let userRelationsRepo: IUserRelationsRepo;
+  let userRelationsServices: UserRelationsServices;
+  let postServices: PostServices;
+  let commentServices: CommentServices;
+
+  let hash: PasswordHash;
+  let userId: UUID;
+  let postId: UUID;
+
+  beforeAll(async () => {
+    await dataManager.init();
+    await dataManager.cleanDB();
+
+    userRepo = new UserRepo();
+    postRepo = new PostRepo();
+    commentRepo = new CommentRepo();
+    userRelationsRepo = new UserRelationsRepo();
+    userRelationsServices = new UserRelationsServices(userRelationsRepo);
+    postServices = new PostServices(postRepo, userRelationsServices);
+    commentServices = new CommentServices(commentRepo);
+
+    hash = await generatePasswordHash("password" as Password);
+  });
+
+  beforeEach(async () => {
+    const user = await userRepo.addUserWithPassword(
+      { email: "email" as Email, username: "username" as Username, isPrivate: false },
+      hash,
+    );
+    userId = user;
+
+    const post = await postRepo.addPost(
+      { description: "description" as Description, closeFriendsOnly: false },
+      [{ value: "tag" as Tag.tagBrand }],
+      [],
       userId,
-      postId,
-      commentText: text,
-      parentId,
-      createdAt: new Date(),
-    };
-  }
+    );
+    postId = post.id;
 
-  async getAllPostComment(postId: UUID, limit: PaginationNumber, page: PaginationNumber) {
-    // Simulate retrieving comments, replace with mock data
-    const comments = [
-      {
-        id: "comment1" as UUID,
-        userId: "user1" as UUID,
-        postId: postId,
-        commentText: "Comment 1" as CommentText,
-        parentId: null,
-        createdAt: new Date(),
-      },
-      {
-        id: "comment2" as UUID,
-        userId: "user2" as UUID,
-        postId: postId,
-        commentText: "Comment 2" as CommentText,
-        parentId: "comment1" as UUID,
-        createdAt: new Date(),
-      },
-    ];
-
-    const total = comments.length;
-
-    // Apply pagination logic
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedComments = comments.slice(startIndex, endIndex);
-
-    return [paginatedComments, total] as [CommentDAO.Type[], number];
-  }
-}
-
-describe("CommentServices", () => {
-  let commentService: CommentServices;
-
-  beforeAll(() => {
-    commentService = new CommentServices(new CommentRepoMock());
+    const comment1= await commentRepo.addComment(userId,postId,"sample" as CommentText,undefined)
+    const comment2 = await commentRepo.addComment(userId, postId, "sample2" as CommentText,undefined)
   });
 
-  describe("addComment", () => {
-    it("should add a comment and return it", async () => {
-      const userId = "user123" as UUID;
-      const postId = "post456" as UUID;
-      const text = "Test comment" as CommentText;
-      const parentId = undefined;
-
-      const result = await commentService.addComment(userId, postId, text, parentId);
-
-      expect(result).toBeDefined();
-      expect(result.userId).toBe(userId);
-      expect(result.postId).toBe(postId);
-      expect(result.commentText).toBe(text);
-      expect(result.parentId).toBe(parentId);
-    });
-
-    it("should throw PostNotFound if commentRepo returns null", async () => {
-      const userId = "user123" as UUID;
-      const postId = "post456" as UUID;
-      const text = "Test comment" as CommentText;
-      const parentId = undefined;
-
-      CommentRepoMock.prototype.addComment = jest.fn().mockResolvedValue("Post not valid!");
-
-      await expect(commentService.addComment(userId, postId, text, parentId)).rejects.toThrow(PostNotFound);
-    });
+  afterEach(async () => {
+    await dataManager.cleanDB();
   });
 
-  it("should throw ParentCommentNotFound if commentRepo returns null", async () => {
-    const userId = "user123" as UUID;
-    const postId = "post456" as UUID;
+  afterAll(async () => {
+    await dataManager.close();
+  });
+
+  test("should add a comment and return it", async () => {
     const text = "Test comment" as CommentText;
-    const parentId = "parent123" as UUID;
+    const parentId = undefined;
 
-    CommentRepoMock.prototype.addComment = jest.fn().mockResolvedValue("parentId not found!");
+    const result = await commentServices.addComment(userId, postId, text, parentId);
 
-    await expect(commentService.addComment(userId, postId, text, parentId)).rejects.toThrow(ParentCommentNotFound);
+    expect(result).toBeDefined();
+    expect(result.userId).toBe(userId);
+    expect(result.postId).toBe(postId);
+    expect(result.commentText).toBe(text);
+    expect(result.parentId).toBe(parentId);
   });
 
+  test("should throw PostNotFound if commentRepo returns null", async () => {
+    const postId = "c0b123b7-d51b-4ffa-97d8-a343795c6ad6";
+    const text = "Test comment" as CommentText;
+    const parentId = undefined;
 
+    await expect(commentServices.addComment(userId, postId, text, parentId)).rejects.toThrow(PostNotFound);
+  });
 
-  describe("getComment", () => {
-    it("should return paginated comments", async () => {
-      const postId = "post456" as UUID;
+  test("should throw ParentCommentNotFound if commentRepo returns null", async () => {
+    const text = "Test comment" as CommentText;
+    const parentId = "c0b123b7-d51b-4ffa-97d8-a343795c6ad6";
+
+    await expect(commentServices.addComment(userId, postId, text, parentId)).rejects.toThrow(ParentCommentNotFound);
+  });
+
+    test ("should return paginated comments", async () => {
       const limit = 10 as PaginationNumber;
       const page = 1 as PaginationNumber;
 
-      const result = await commentService.getComment(postId, limit, page);
+      const result = await commentServices.getComment(postId, limit, page);
 
       expect(result).toBeDefined();
       expect(result.items.length).toBe(2); // Mock data has 2 comments
-      //   expect(result.totalItems).toBe(2); // Mock data has a total of 2 comments
     });
   });
-});
