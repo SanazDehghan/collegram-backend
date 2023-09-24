@@ -1,5 +1,5 @@
 import { Password, PasswordHash, generatePasswordHash } from "~/models/password.models";
-import { Email, Username, BaseUser, User, UserWithPassword } from "~/models/user.models";
+import { Email, Username, BaseUser, User, UserWithPassword, UserRelationTypes } from "~/models/user.models";
 import { IUserRepo } from "~/repository/user.repo";
 import {
   DuplicateEmailError,
@@ -17,12 +17,14 @@ import { UUID } from "crypto";
 import { baseUrl, mailConfig } from "~/template/config";
 import { Token } from "~/models/token.models";
 import { UploadImageDTO } from "~/controllers/dtos/image.dtos";
+import { FollowingUser, UserRelationsServices } from "./userRelations.services";
 
 export class UserServices {
   constructor(
     private userRepo: IUserRepo,
     private passwordRepo: IPasswordRepo,
     private tokenServices: TokenServices,
+    private relationsServices: UserRelationsServices,
     private mailServices: MailServices,
   ) {}
 
@@ -131,7 +133,7 @@ export class UserServices {
       ...userInfo,
     };
   }
-  private  editUserWithPass(passwordHash: PasswordHash, userInfo: UserWithPassword) {
+  private editUserWithPass(passwordHash: PasswordHash, userInfo: UserWithPassword) {
     return {
       passwordHash,
       ...userInfo,
@@ -147,5 +149,22 @@ export class UserServices {
     }
 
     return userStatus;
+  }
+
+  public async follow(followerId: UUID, followingId: UUID) {
+    const followingUser = await this.getUserInfo(followingId);
+    
+    const followResult = await this.relationsServices.follow(followerId, followingUser);
+
+    if (followResult === null) return "ALREADY_REQUESTED";
+    if (followResult === "REQUESTED") return "REQUESTED";
+
+    const result = await this.userRepo.increaseFollowCount(followerId, followingId);
+
+    if (result === "ERROR_USER_NOT_FOUND") {
+      throw new UserNotFound();
+    }
+
+    return "FOLLOWED";
   }
 }

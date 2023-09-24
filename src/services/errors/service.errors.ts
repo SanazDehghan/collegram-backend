@@ -17,3 +17,11 @@ export class PostNotFound extends ServiceError {}
 export class ForbiddenNumberOfPhotos extends ServiceError {}
 
 export class ForbiddenNumberOfTags extends ServiceError {}
+
+export class CommentNotFound extends ServiceError {}
+
+export class InvalidCommentError extends ServiceError {}
+
+export class ForbiddenFollowUser extends ServiceError {}
+
+export class ParentCommentNotFound extends ServiceError {}

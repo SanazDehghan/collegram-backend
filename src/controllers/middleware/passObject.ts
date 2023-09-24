@@ -4,6 +4,7 @@ import { Token, zodBearerToken } from "~/models/token.models";
 import { TokenServices } from "~/services/token.services";
 import { UnauthorizedError } from "../errors/http.error";
 import { UUID } from "crypto";
+import { errorResponse } from "../tools/error.response.tools";
 
 class PassObject {
   constructor(private tokenServices: TokenServices) {}
@@ -37,7 +38,7 @@ class PassObject {
 
         handler(dto)(req, res, next);
       } catch (error) {
-        return next(error);
+        errorResponse(res, error);
       }
     };
   }
@@ -49,7 +50,7 @@ class PassObject {
 
         handler(uid)(req, res, next);
       } catch (error) {
-        return next(error);
+        errorResponse(res, error);
       }
     };
   }
@@ -65,7 +66,7 @@ class PassObject {
 
         fn(uid, dto)(req, res, next);
       } catch (error) {
-        next(error);
+        errorResponse(res, error);
       }
     };
   }

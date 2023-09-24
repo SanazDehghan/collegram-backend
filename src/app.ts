@@ -1,6 +1,6 @@
 import express from "express";
 import { routes } from "~/controllers";
-import { errorHandler, notFoundHandler, successHandler } from "~/controllers/middleware/output";
+import { defaultHandler } from "~/controllers/middleware/default";
 import { ProcessManager } from "~/utilities/ProcessManager";
 import { dataManager } from "./DataManager";
 import cors from "cors";
@@ -29,19 +29,14 @@ export class App {
     for (const route of routes) {
       this.express.use(route.base, route.router);
     }
-  }
 
-  private initOutputHandlers() {
-    this.express.use(successHandler());
-    this.express.use(notFoundHandler());
-    this.express.use(errorHandler());
+    this.express.use(defaultHandler());
   }
 
   public async init() {
     await dataManager.init();
     this.initMiddleware();
     this.initRoutes();
-    this.initOutputHandlers();
   }
 
   public getExpress() {

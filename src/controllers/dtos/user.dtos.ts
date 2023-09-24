@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { zodNonEmptyString } from "~/models/common";
+import { zodNonEmptyString, zodUUID } from "~/models/common";
 import { zodPassword } from "~/models/password.models";
-import { zodBearerToken, zodToken } from "~/models/token.models";
+import { zodToken } from "~/models/token.models";
 import { zodBio, zodEmail, zodUsername } from "~/models/user.models";
 
 export const zodSignupDTO = z.object({
@@ -44,3 +44,11 @@ export const zodUserInfoDTO = z.object({
 });
 
 export type UserInfoDTO = z.infer<typeof zodUserInfoDTO>;
+
+export namespace followDTO {
+  export const zod = z.object({
+    userId: zodUUID,
+  });
+
+  export type Type = z.infer<typeof zod>;
+}

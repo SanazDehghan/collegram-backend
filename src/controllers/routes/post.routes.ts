@@ -1,18 +1,19 @@
 import { PostServices } from "~/services/post.services";
 import {
   ADDPostDTO,
+  BookmarkPostDTO,
+  EditPostDTO,
+  GetMyBookmarksDTO,
+  FollowingsPostsDTO,
   GetMyPostsDTO,
   GetPostDetailsDTO,
+  LikePostDTO,
   zodGetMyPostsDTO,
   zodGetPostDetailsDTO,
 } from "../dtos/post.dtos";
-import { errorMapper } from "../tools/errorMapper.tools";
-import { BaseRoutes, RouteHandler } from "./base.routes";
-import { RequestHandler } from "express";
-import { UUID } from "crypto";
+import { BaseRoutes, Handler } from "./base.routes";
 import { passObject } from "../middleware/passObject";
 import { upload } from "../middleware/upload";
-import { UploadImageDTO } from "~/controllers/dtos/image.dtos";
 
 export class PostRoutes extends BaseRoutes {
   constructor(private service: PostServices) {
@@ -20,52 +21,118 @@ export class PostRoutes extends BaseRoutes {
 
     this.router.post("/", upload.files("photos", 5), upload.passData(ADDPostDTO.zod, this.addPost.bind(this)));
     this.router.get("/", passObject.passUserDTO(zodGetMyPostsDTO, this.getMyPosts.bind(this)));
+    this.router.put("/like", passObject.passUserDTO(LikePostDTO.zod, this.likePost.bind(this)));
+    this.router.get("/bookmark", passObject.passUserDTO(GetMyBookmarksDTO.zod, this.getMyBookmarks.bind(this)));
+    this.router.put("/bookmark", passObject.passUserDTO(BookmarkPostDTO.zod, this.bookmarkPost.bind(this)));
+    this.router.get("/followings", passObject.passUserDTO(FollowingsPostsDTO.zod, this.getFollowingsPosts.bind(this)));
     this.router.get("/:postId", passObject.passUserDTO(zodGetPostDetailsDTO, this.getPostDetails.bind(this)));
+    this.router.put("/:postId", passObject.passUserDTO(EditPostDTO.zod, this.editPost.bind(this)));
   }
 
-  private getMyPosts(uid: UUID, dto: GetMyPostsDTO): RequestHandler {
-    return async (req, res, next) => {
+  private editPost: Handler.UserDTO<EditPostDTO.Type> = (uid, dto) => {
+    return async (req, res) => {
+      try {
+        console.log(dto);
+
+        const postId = dto.postId;
+        const tags = dto.tags;
+        const basePost = { description: dto.description, closeFriendsOnly: dto.closeFriendsOnly };
+        const result = await this.service.editPost(uid, postId, tags, basePost);
+
+        this.sendData(res, result);
+      } catch (error) {
+        this.sendError(res, error);
+      }
+    };
+  };
+
+  private getMyPosts: Handler.UserDTO<GetMyPostsDTO> = (uid, dto) => {
+    return async (req, res) => {
       try {
         const { limit, page } = dto;
         const result = await this.service.getAllUserPosts(uid, limit, page);
 
-        res.data = result;
-
-        next();
+        this.sendData(res, result);
       } catch (error) {
-        next(errorMapper(error));
+        this.sendError(res, error);
       }
     };
-  }
+  };
 
-  private getPostDetails(uid: UUID, dto: GetPostDetailsDTO): RequestHandler {
-    return async (req, res, next) => {
+  private getPostDetails: Handler.UserDTO<GetPostDetailsDTO> = (uid, dto) => {
+    return async (req, res) => {
       try {
         const result = await this.service.getPostDetails(uid, dto.postId);
 
-        res.data = result;
+        this.sendData(res, result);
       } catch (error) {
-        next(errorMapper(error));
+        this.sendError(res, error);
       }
     };
-  }
+  };
 
-  private addPost(
-    userId: UUID,
-    dto: ADDPostDTO.AddPostType,
-    files: UploadImageDTO.Type[],
-  ): RouteHandler<ADDPostDTO.AddPostType> {
-    return async (req, res, next) => {
+  private addPost: Handler.UploadData<ADDPostDTO.AddPostType> = (userId, dto, files) => {
+    return async (req, res) => {
       try {
         const tags = dto.tags;
         const basePost = { description: dto.description, closeFriendsOnly: dto.closeFriendsOnly };
         const post = await this.service.addPost(basePost, files, tags, userId);
-        res.data = post;
 
-        next();
+        this.sendData(res, post);
       } catch (error) {
-        next(errorMapper(error));
+        this.sendError(res, error);
       }
     };
-  }
+  };
+
+  private likePost: Handler.UserDTO<LikePostDTO.Type> = (uid, dto) => {
+    return async (req, res) => {
+      try {
+        const result = await this.service.togglePostLike(uid, dto.postId);
+
+        this.sendData(res, result);
+      } catch (error) {
+        this.sendError(res, error);
+      }
+    };
+  };
+
+  private bookmarkPost: Handler.UserDTO<BookmarkPostDTO.Type> = (uid, dto) => {
+    return async (req, res) => {
+      try {
+        const { postId } = dto;
+        const result = await this.service.toggleBookmarkPost(uid, postId);
+
+        this.sendData(res, result);
+      } catch (error) {
+        this.sendError(res, error);
+      }
+    };
+  };
+
+  private getMyBookmarks: Handler.UserDTO<GetMyBookmarksDTO.Type> = (uid, dto) => {
+    return async (req, res, next) => {
+      try {
+        const { limit, page } = dto;
+        const result = await this.service.getMyBookmarks(uid, limit, page);
+
+        this.sendData(res, result);
+      } catch (error) {
+        this.sendError(res, error);
+      }
+    };
+  };
+
+  private getFollowingsPosts: Handler.UserDTO<FollowingsPostsDTO.Type> = (uid, dto) => {
+    return async (req, res) => {
+      try {
+        const { limit, page } = dto;
+        const result = await this.service.getAllFollowingsPosts(uid, limit, page);
+
+        this.sendData(res, result);
+      } catch (error) {
+        this.sendError(res, error);
+      }
+    };
+  };
 }

@@ -5,15 +5,18 @@ import { UsersEntity } from "~/entities/user.entities";
 import { PasswordHash, zodPasswordHash } from "~/models/password.models";
 import { BaseUser, Email, User, UserWithPasswordHash, Username, zodEmail, zodUser } from "~/models/user.models";
 import { cleanObj } from "~/utilities/object";
+import { parseDAO } from "./tools/parse";
+import { editedUserDAO } from "./daos/user.daos";
 
 export interface IUserRepo {
-  addUserWithPassword: (user: BaseUser, passwordHash: PasswordHash) => Promise<UUID | null>;
+  addUserWithPassword: (user: BaseUser, passwordHash: PasswordHash) => Promise<UUID>;
   getUserById: (id: UUID) => Promise<User | null>;
   getUserByUsername: (username: Username) => Promise<User | null>;
   getUserByEmail: (email: Email) => Promise<User | null>;
-  editUser: (userId: UUID, editedUser: Partial<UserWithPasswordHash>) => Promise<Partial<UserWithPasswordHash> | null>;
+  editUser: (userId: UUID, editedUser: Partial<UserWithPasswordHash>) => Promise<Partial<User> | null>;
   getUserWithPasswordHash: (identifier: Email | Username) => Promise<UserWithPasswordHash | null>;
   getEmailByIdentifier: (identifier: Email | Username) => Promise<Email | null>;
+  increaseFollowCount: (followerId: UUID, followingId: UUID) => Promise<"UPDATED" | "ERROR_USER_NOT_FOUND">;
 }
 
 export class UserRepo implements IUserRepo {
@@ -72,14 +75,14 @@ export class UserRepo implements IUserRepo {
 
     const updatedUser = { ...dbUser, ...editedUser };
 
-    this.repository.save({
+    await this.repository.save({
       ...updatedUser,
       password: {
         passwordHash: editedUser.passwordHash,
       },
     });
 
-    return editedUser;
+    return parseDAO(editedUserDAO.zod, updatedUser);
   }
 
   public async getUserWithPasswordHash(identifier: Email | Username) {
@@ -120,5 +123,18 @@ export class UserRepo implements IUserRepo {
     const email: Email = zodEmail.parse(user.email);
 
     return email;
+  }
+
+  public async increaseFollowCount(followerId: UUID, followingId: UUID) {
+    const follower = await this.repository.findOneBy({ id: followerId });
+    const following = await this.repository.findOneBy({ id: followingId });
+    if (follower === null || following === null) {
+      return "ERROR_USER_NOT_FOUND";
+    }
+
+    const updateFollower = await this.repository.update(followerId, { followings: follower.followings + 1 });
+    const updateFollowing = await this.repository.update(followingId, { followers: following.followers + 1 });
+
+    return "UPDATED";
   }
 }

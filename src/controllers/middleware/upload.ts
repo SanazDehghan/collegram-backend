@@ -7,6 +7,7 @@ import { UUID } from "crypto";
 import { TokenServices } from "~/services/token.services";
 import { zodBearerToken } from "~/models/token.models";
 import { UploadImageDTO } from "~/controllers/dtos/image.dtos";
+import { errorResponse } from "../tools/error.response.tools";
 
 class Upload {
   private uploadDir = ProcessManager.get("UPLOAD_DIR").str ?? "uploads";
@@ -32,7 +33,7 @@ class Upload {
 
         await fn(id, dto, files)(req, res, next);
       } catch (error) {
-        next(error);
+        errorResponse(res, error);
       }
     };
   }
@@ -86,9 +87,9 @@ class Upload {
     return (req, res, next) => {
       handler(req, res, (error: unknown) => {
         if (error instanceof MulterError) {
-          return next(this.multerErrorMapper(error));
+          return errorResponse(res, this.multerErrorMapper(error));
         } else if (error) {
-          return next(error);
+          return errorResponse(res, error);
         }
 
         return next();

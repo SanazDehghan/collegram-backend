@@ -29,17 +29,17 @@ export class CommentsEntity {
   post!: PostsEntity;
 
   @Column()
-  text!: string;
+  commentText!: string;
 
-  @Column("uuid")
+  @Column("uuid", { nullable: true })
   parentId?: UUID;
 
   @ManyToOne(() => CommentsEntity)
   parentComment?: CommentsEntity;
 
-  @CreateDateColumn({ type: "timestamp" })
-  createdAt!: number;
+  @CreateDateColumn()
+  createdAt!: Date;
 
-  @UpdateDateColumn({ type: "timestamp" })
-  updatedAt!: number;
+  @UpdateDateColumn()
+  updatedAt!: Date;
 }

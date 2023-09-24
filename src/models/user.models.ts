@@ -1,14 +1,28 @@
 import { z } from "zod";
 import { Brand, zodNonEmptyString, zodUUID } from "./common";
 import { zodPassword, zodPasswordHash } from "./password.models";
+import { UUID } from "crypto";
 
 export type Username = Brand<string, "username">;
 
 export type Email = Brand<string, "email">;
 
-export const userRelations = ["WAITING", "FOLLOW", "CLOSE", "BLOCKED"] as const;
+export const userRelations = ["REQUESTED", "FOLLOW", "CLOSE_FRIEND", "BLOCKED"] as const;
 
-export type UserRelations = (typeof userRelations)[number];
+export const zodUserRelations = z.union([
+  z.literal("REQUESTED"),
+  z.literal("FOLLOW"),
+  z.literal("CLOSE_FRIEND"),
+  z.literal("BLOCKED"),
+]);
+
+export type UserRelationTypes = z.infer<typeof zodUserRelations>;
+
+export interface IUserRelations {
+  user1Id: UUID;
+  user2Id: UUID;
+  relationType: UserRelationTypes;
+}
 
 export type Bio = Brand<string, "bio">;
 

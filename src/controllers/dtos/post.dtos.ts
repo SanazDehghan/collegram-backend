@@ -25,3 +25,46 @@ export namespace ADDPostDTO {
 
   export type AddPostType = z.infer<typeof zod>;
 }
+
+export namespace EditPostDTO {
+  export const zod = z.object({
+    description: zodDescription,
+    closeFriendsOnly: z.boolean(),
+    tags: z.array(Tag.zod),
+    postId: zodUUID,
+  });
+
+  export type Type = z.infer<typeof zod>;
+}
+export namespace LikePostDTO {
+  export const zod = z.object({
+    postId: zodUUID,
+  });
+
+  export type Type = z.infer<typeof zod>;
+}
+
+export namespace BookmarkPostDTO {
+  export const zod = z.object({
+    postId: zodUUID
+  });
+
+  export type Type = z.infer<typeof zod>;
+}
+
+export namespace GetMyBookmarksDTO {
+  export const zod = z.object({
+    limit: zodPaginationNumber.default(20),
+    page: zodPaginationNumber.default(1),
+  });
+
+  export type Type = z.infer<typeof zod>;
+}
+export namespace FollowingsPostsDTO {
+  export const zod = z.object({
+    limit: zodPaginationNumber.default(20),
+    page: zodPaginationNumber.default(1),
+  });
+
+  export type Type = z.infer<typeof zod>;
+}

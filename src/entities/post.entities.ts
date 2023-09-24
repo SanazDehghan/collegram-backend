@@ -40,12 +40,21 @@ export class PostsEntity {
   @JoinTable()
   tags!: TagsEntity[];
 
+  @Column({ default: 0 })
+  likes!: number;
+
+  @Column({ default: 0 })
+  bookmarks!: number;
+
+  @Column({ default: 0 })
+  commentsNum!: number;
+
   @OneToMany(() => CommentsEntity, (comment) => comment.post)
   comments!: CommentsEntity[];
 
-  @CreateDateColumn({ type: "timestamp" })
-  createdAt!: number;
+  @CreateDateColumn()
+  createdAt!: Date;
 
-  @UpdateDateColumn({ type: "timestamp" })
-  updatedAt!: number;
+  @UpdateDateColumn()
+  updatedAt!: Date;
 }
